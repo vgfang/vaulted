@@ -14,7 +14,7 @@ import {Screens, useScreen} from '../hooks/screen-context';
 import {Controls, Control} from '../components/controls';
 import {CONTROL_WIDTH} from '../utils/constants';
 import {VaultMetadata} from '@/types';
-import * as core from '@core/core';
+import * as core from '../core/core';
 import settings from '../../settings.json';
 
 export const Vaults = () => {
@@ -44,7 +44,7 @@ export const Vaults = () => {
 				const vaults = await core.listVaults(settings['vaults-path']);
 				// filter out any null/undefined vaults and use full metadata
 				const validVaults = vaults.filter(
-					(vault): vault is VaultMetadata => vault != null,
+					(vault: any): vault is VaultMetadata => vault != null,
 				);
 				setVaultMetadataList(validVaults);
 			} catch (error) {

@@ -17,7 +17,11 @@
 		"dist"
 	],
 	"dependencies": {
+		"@libsql/client": "^0.15.12",
+		"@types/node": "^24.3.0",
 		"clipboardy": "^4.0.0",
+		"dotenv": "^17.2.1",
+		"drizzle-orm": "^0.44.4",
 		"ink": "^4.1.0",
 		"meow": "^11.0.0",
 		"react": "^18.2.0"

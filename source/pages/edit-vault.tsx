@@ -22,7 +22,7 @@ import {
 	VAULT_FILE_EXTENSION,
 } from '../utils/constants';
 import {Colors} from '../styles/colors';
-import * as core from '../../../core/core';
+import * as core from '../core/core';
 import settings from '../../settings.json';
 
 export const EditVault = () => {
