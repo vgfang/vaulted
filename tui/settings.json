@@ -1,0 +1,7 @@
+{
+	"lockout-timeout": 300,
+	"clipboard-timeout": 60,
+	"clear-clipboard-on-exit": true,
+	"confirm-before-quit": false,
+	"vaults-path": "~/.vaults"
+}

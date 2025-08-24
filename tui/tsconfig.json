@@ -1,0 +1,16 @@
+{
+	"extends": "@sindresorhus/tsconfig",
+	"compilerOptions": {
+		"outDir": "dist",
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"baseUrl": ".",
+		"paths": {
+			"@core/*": ["../core/*"],
+			"@/*": ["./source/*"]
+		}
+	},
+	"include": ["source"]
+}
