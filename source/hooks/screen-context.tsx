@@ -35,6 +35,7 @@ type ScreenContextType = {
 	setSelectedVault: (v: VaultMetadata | null) => void;
 	isTooSmall: boolean;
 	showError: (error: string) => void;
+	timeUntilLockout: number;
 };
 
 export const ScreenContext = createContext<ScreenContextType | null>(null);
@@ -54,6 +55,9 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 		Screens.TITLE,
 	);
 	const [previousScreen, setPreviousScreen] = useState<Screens | null>(null);
+
+	// TODO: add time until lockout
+	const [timeUntilLockout, setTimeUntilLockout] = useState<number>(0);
 
 	// Enhanced setCurrentScreen that tracks previous screen
 	const setCurrentScreen = (newScreen: Screens) => {
@@ -102,6 +106,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 				setSelectedVault,
 				isTooSmall,
 				showError,
+				timeUntilLockout,
 			}}
 		>
 			{children}

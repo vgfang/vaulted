@@ -10,6 +10,7 @@ type FormInputProps = {
 	placeholder?: string;
 	labelWidth?: number;
 	height?: number;
+	showPasswords?: boolean;
 };
 
 export enum FormInputType {
@@ -35,6 +36,7 @@ export const FormInput = ({
 	selected = false,
 	labelWidth = 20,
 	height = 1,
+	showPasswords = false,
 }: FormInputProps) => {
 	// pad the label to the specified width
 	const paddedLabel = `${label}:`.padEnd(labelWidth);
@@ -46,7 +48,9 @@ export const FormInput = ({
 	const calculateHeight = () => {
 		if (value) {
 			const contentToDisplay =
-				type === FormInputType.PASSWORD ? hidePassword(value) : value;
+				type === FormInputType.PASSWORD && !showPasswords
+					? hidePassword(value)
+					: value;
 			const lines = Math.ceil(contentToDisplay.length / valueWidth) || 1;
 			return Math.max(height, lines);
 		}
@@ -97,7 +101,7 @@ export const FormInput = ({
 							color={selected ? Colors.SELECTED : Colors.DEFAULT}
 							wrap="wrap"
 						>
-							{hidePassword(value)}
+							{showPasswords ? value : hidePassword(value)}
 						</Text>
 					) : (
 						<Text

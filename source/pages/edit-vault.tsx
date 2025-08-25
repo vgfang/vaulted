@@ -40,6 +40,9 @@ export const EditVault = () => {
 	});
 
 	const {selectedVault} = useScreen();
+	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
+	const [selectedFormIndex, setSelectedFormIndex] = useState(0);
+	const [passwordVisible, setPasswordVisible] = useState(false);
 
 	useEffect(() => {
 		if (selectedVault) {
@@ -117,9 +120,7 @@ export const EditVault = () => {
 			label: 'Confirm Password',
 			type: FormInputType.PASSWORD,
 			value: formData.confirmPassword,
-			placeholder: selectedVault
-				? 'Enter vault password'
-				: 'Update vault password?',
+			placeholder: 'Confirm vault password',
 			height: 1,
 			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
 			attemptChange: (value: string) => {
@@ -161,16 +162,17 @@ export const EditVault = () => {
 			console.error('Failed to create vault:', error);
 		}
 	};
+	const handleToggleView = () => {
+		setPasswordVisible(prev => !prev);
+	};
 
 	const controls: Control[] = [
 		{shortcut: 'b', tag: 'Back', func: goBack},
 		{shortcut: 'e', tag: 'Edit', func: () => {}},
 		{shortcut: 'g', tag: 'Gen.', func: () => {}},
-		{shortcut: 'u', tag: 'Unhide', func: () => {}},
+		{shortcut: 'v', tag: 'View', func: handleToggleView},
 		{shortcut: 's', tag: 'Save', func: handleSave},
 	];
-	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
-	const [selectedFormIndex, setSelectedFormIndex] = useState(0);
 
 	const title = selectedVault
 		? `Edit Vault: ${selectedVault.name}`
@@ -223,7 +225,11 @@ export const EditVault = () => {
 				gap={2}
 			>
 				{!isLoading && (
-					<Form inputs={formInputs} selectedIndex={selectedFormIndex} />
+					<Form
+						inputs={formInputs}
+						selectedIndex={selectedFormIndex}
+						showPasswords={passwordVisible}
+					/>
 				)}
 				{!isLoading && selectedVault && (
 					<Box alignItems="flex-start" flexDirection="column">

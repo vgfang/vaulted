@@ -20,9 +20,11 @@ export interface FormInput {
 export const Form = ({
 	inputs,
 	selectedIndex,
+	showPasswords = false,
 }: {
 	inputs: FormInput[];
 	selectedIndex: number;
+	showPasswords?: boolean;
 }) => {
 	const maxLabelWidth =
 		Math.max(...inputs.map(input => input.label.length)) + 2;
@@ -40,6 +42,7 @@ export const Form = ({
 						selected={selectedIndex === index}
 						labelWidth={maxLabelWidth}
 						height={input.height}
+						showPasswords={showPasswords}
 					/>
 				))}
 			</Box>
