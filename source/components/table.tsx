@@ -4,7 +4,7 @@ import {Colors} from '../styles/colors.js';
 
 type TableProps = {
 	rows: Record<string, any>[];
-	header?: string[];
+	header: string[];
 	selectedIndex?: number;
 	isDeleting?: boolean;
 };
@@ -23,11 +23,14 @@ export const Table = ({
 		);
 	}
 
-	// if no header provided, use keys from first row
-	const columns = header ?? Object.keys(rows[0] ?? {});
-	const colWidths = columns.map(col =>
+	// add index column to the front of headers
+	const columns = ['#', ...header];
+	// calculate column widths, including index column
+	const indexWidth = Math.max(1, String(rows.length).length);
+	const headerColWidths = header.map(col =>
 		Math.max(col.length, ...rows.map(row => String(row[col] ?? '').length)),
 	);
+	const colWidths = [indexWidth, ...headerColWidths];
 	const pad = (text: string, width: number) =>
 		text + ' '.repeat(width - text.length);
 	const centerPad = (text: string, width: number) => {
@@ -39,41 +42,44 @@ export const Table = ({
 
 	return (
 		<Box flexDirection="column">
-			{header && (
-				<Box flexDirection="row">
-					{columns.map((col, i) => (
-						<Box key={i} flexDirection="row">
-							<Text color={Colors.HIGHLIGHT}>
-								{centerPad(col, colWidths[i] ?? 0)}
-							</Text>
-							{i < columns.length - 1 && <Text dimColor> │ </Text>}
-						</Box>
-					))}
-				</Box>
-			)}
+			<Box flexDirection="row">
+				{columns.map((col, i) => (
+					<Box key={i} flexDirection="row">
+						<Text color={Colors.HIGHLIGHT}>
+							{centerPad(col, colWidths[i] ?? 0)}
+						</Text>
+						{i < columns.length - 1 && <Text dimColor> │ </Text>}
+					</Box>
+				))}
+			</Box>
 
-			{header && (
-				<Text dimColor>{colWidths.map(w => '─'.repeat(w)).join('─┼─')}</Text>
-			)}
+			<Text dimColor>{colWidths.map(w => '─'.repeat(w)).join('─┼─')}</Text>
 
 			{rows.map((row, idx) => (
 				<Box key={idx} flexDirection="row">
-					{columns.map((col, i) => (
-						<Box key={i} flexDirection="row">
-							<Text
-								color={
-									selectedIndex === idx && isDeleting
-										? Colors.ACCENT
-										: selectedIndex === idx
-										? Colors.SELECTED
-										: Colors.DEFAULT
-								}
-							>
-								{pad(String(row[col] ?? ''), colWidths[i] ?? 0)}
-							</Text>
-							{i < columns.length - 1 && <Text dimColor> │ </Text>}
-						</Box>
-					))}
+					{columns.map((col, i) => {
+						const isIndexColumn = i === 0;
+						const cellValue = isIndexColumn
+							? String(idx + 1)
+							: String(row[col] ?? '');
+
+						return (
+							<Box key={i} flexDirection="row">
+								<Text
+									color={
+										selectedIndex === idx && isDeleting
+											? Colors.ACCENT
+											: selectedIndex === idx
+											? Colors.SELECTED
+											: Colors.DEFAULT
+									}
+								>
+									{pad(cellValue, colWidths[i] ?? 0)}
+								</Text>
+								{i < columns.length - 1 && <Text dimColor> │ </Text>}
+							</Box>
+						);
+					})}
 				</Box>
 			))}
 		</Box>

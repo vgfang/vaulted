@@ -24,14 +24,18 @@ const Control = ({
 			justifyContent="space-between"
 			{...(fixedWidth ? {width: fixedWidth} : {})}
 		>
-			{bordered && (
-				<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>[</Text>
-			)}
-			<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>{tag}</Text>
-			<Text color={Colors.SHORTCUT}>{shortcut}</Text>
-			{bordered && (
-				<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>]</Text>
-			)}
+			<Box flexDirection="row" justifyContent="flex-start">
+				{bordered && (
+					<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>[</Text>
+				)}
+				<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>{tag}</Text>
+			</Box>
+			<Box flexDirection="row" justifyContent="flex-end">
+				<Text color={Colors.SHORTCUT}>{shortcut}</Text>
+				{bordered && (
+					<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>]</Text>
+				)}
+			</Box>
 		</Box>
 	);
 };

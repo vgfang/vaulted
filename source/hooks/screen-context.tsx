@@ -6,8 +6,9 @@ import {VaultMetadata} from '@/types';
 export enum Screens {
 	TITLE = 'title',
 	VAULT_MENU = 'vaults',
-	EDIT_VAULT_MENU = 'edit-vaults',
+	EDIT_VAULT_MENU = 'edit-vault',
 	PASSWORD_MENU = 'passwords',
+	EDIT_PASSWORD_MENU = 'edit-password',
 	SETTINGS = 'settings',
 	HELP = 'help',
 }
@@ -18,6 +19,7 @@ const SCREEN_NAVIGATION: Record<Screens, Screens | null> = {
 	[Screens.VAULT_MENU]: Screens.TITLE,
 	[Screens.EDIT_VAULT_MENU]: Screens.VAULT_MENU,
 	[Screens.PASSWORD_MENU]: Screens.VAULT_MENU,
+	[Screens.EDIT_PASSWORD_MENU]: Screens.PASSWORD_MENU,
 	[Screens.SETTINGS]: Screens.TITLE,
 	[Screens.HELP]: Screens.TITLE,
 };

@@ -100,8 +100,8 @@ export const EditVault = () => {
 			type: FormInputType.PASSWORD,
 			value: formData.password,
 			placeholder: selectedVault
-				? 'Enter vault password'
-				: 'Update vault password?',
+				? 'Update vault password'
+				: 'Enter vault password',
 			height: 1,
 			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
 			attemptChange: (value: string) => {
@@ -174,7 +174,7 @@ export const EditVault = () => {
 
 	const title = selectedVault
 		? `Edit Vault: ${selectedVault.name}`
-		: 'Create Vault';
+		: 'New Vault';
 
 	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
 		if (buffer.isActive && key.return) {

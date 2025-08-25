@@ -13,5 +13,5 @@ export const TEXT_INPUT_WIDTH = 32;
 export const NAME_MAX_LENGTH = TEXT_INPUT_WIDTH;
 export const DESCRIPTION_MAX_LENGTH = TEXT_INPUT_WIDTH * 2;
 export const PASSWORD_MAX_LENGTH = TEXT_INPUT_WIDTH * 4;
-export const CONTROL_WIDTH = 11;
+export const CONTROL_WIDTH = 8;
 export const VAULT_FILE_EXTENSION = '.vault';

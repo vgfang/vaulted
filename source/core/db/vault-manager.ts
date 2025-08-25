@@ -133,7 +133,7 @@ class VaultManager {
 		}
 	};
 
-	// when user updates master password
+	// when user updates vault password
 	updateLastPasswordChange = async (): Promise<void> => {
 		await this.db
 			.update(metadataTable)

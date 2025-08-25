@@ -19,9 +19,8 @@ export const BufferLine = ({buffer, label = 'Input'}: BufferLineProps) => {
 	const displayText = buffer.isHidden
 		? hideText(buffer.content)
 		: buffer.content;
-	const labelText = `${label}: `;
 
-	const labelWidth = labelText.length;
+	const labelWidth = label.length + 2;
 	const contentWidth = cols - labelWidth - 6;
 
 	// truncate from front if text is too long
@@ -41,7 +40,10 @@ export const BufferLine = ({buffer, label = 'Input'}: BufferLineProps) => {
 			{buffer.isActive && (
 				<>
 					<Box width={labelWidth}>
-						<Text color={Colors.ACCENT}>{labelText}</Text>
+						<Text color={Colors.ACCENT} backgroundColor={Colors.BACKGROUND}>
+							{label}
+						</Text>
+						<Text color={Colors.DEFAULT}>:</Text>
 					</Box>
 
 					<Box width={contentWidth} flexDirection="row">

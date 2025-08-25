@@ -7,4 +7,5 @@ export enum Colors {
 	BORDER = 'cyan',
 	DEFAULT = 'white',
 	ERROR = 'red',
+	BACKGROUND = 'gray',
 }

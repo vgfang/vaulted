@@ -10,11 +10,19 @@ import {CONTROL_WIDTH} from '../utils/constants';
 
 export const Passwords = () => {
 	const {goBack} = useScreen();
-	const controls: Control[] = [{shortcut: 'b', tag: 'Back', func: goBack}];
+	const controls: Control[] = [
+		{shortcut: 'b', tag: 'Back', func: goBack},
+		{shortcut: 'c', tag: 'Copy', func: () => {}},
+		{shortcut: 'd', tag: 'Edit', func: () => {}},
+		{shortcut: 'n', tag: 'New', func: () => {}},
+		{shortcut: 's', tag: 'Sea.', func: () => {}},
+		{shortcut: 'f', tag: 'Fav.', func: () => {}},
+		{shortcut: 'd', tag: 'Del', func: () => {}},
+	];
 	const [selectedControlIndex, setSelectedControlIndex] = useState(0);
 
 	const {selectedVault} = useScreen();
-	const title = selectedVault ? `Vault: ${selectedVault}` : 'Error';
+	const title = selectedVault ? `Vault: ${selectedVault.name}` : 'Error';
 
 	useCustomInput((input, key) => {
 		navigateLeftRight(
@@ -30,7 +38,7 @@ export const Passwords = () => {
 		<Box
 			flexDirection="column"
 			flexGrow={1}
-			justifyContent="flex-start"
+			justifyContent="space-between"
 			alignItems="center"
 		>
 			<Header title={title} />

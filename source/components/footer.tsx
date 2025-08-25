@@ -13,6 +13,8 @@ export const Footer = ({children}: FooterProps) => (
 		justifyContent="flex-end"
 		paddingLeft={2}
 		paddingRight={2}
+		paddingTop={1}
+		height={3}
 	>
 		{children}
 	</Box>

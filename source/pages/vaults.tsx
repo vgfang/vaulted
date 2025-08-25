@@ -13,7 +13,11 @@ import {
 } from '../utils/navigation';
 import {Screens, useScreen} from '../hooks/screen-context';
 import {Controls, Control} from '../components/controls';
-import {CONTROL_WIDTH, NAME_MAX_LENGTH} from '../utils/constants';
+import {
+	CONTROL_WIDTH,
+	NAME_MAX_LENGTH,
+	PASSWORD_MAX_LENGTH,
+} from '../utils/constants';
 import {VaultMetadata} from '@/types';
 import * as core from '../core/core';
 import settings from '../../settings.json';
@@ -31,6 +35,7 @@ export const Vaults = () => {
 	const [selectedTableIndex, setSelectedTableIndex] = useState(0);
 	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [isEnteringPassword, setIsEnteringPassword] = useState(false);
 
 	const {setCurrentScreen, goBack, setSelectedVault} = useScreen();
 
@@ -46,6 +51,24 @@ export const Vaults = () => {
 		} catch (error) {
 			console.error('Failed to delete vault:', error);
 			// TODO: show error to user and potentially revert UI changes
+		}
+	};
+
+	const performOpenVault = async (vault: VaultMetadata, password: string) => {
+		try {
+			// const expandedVaultsPath = expandPath(settings['vaults-path']);
+			// const filePath = `${expandedVaultsPath}/${vault.name}.vault`;
+
+			// create vault manager and try to open with password
+			// const vaultManager = new core.VaultManager(filePath);
+			// await vaultManager.openVault(password);
+
+			setSelectedVault(vault);
+			setCurrentScreen(Screens.PASSWORD_MENU);
+			// vaultManager.closeConnection();
+		} catch (error) {
+			console.error('Failed to open vault:', error);
+			// TODO: show error to user (wrong password, etc.)
 		}
 	};
 
@@ -77,9 +100,9 @@ export const Vaults = () => {
 		fetchVaults();
 	}, []);
 
-	const {buffer, enableBuffer} = useCustomInput((input, key) => {
-		if (buffer.isActive) {
-			if (key.return) {
+	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
+		if (buffer.isActive && key.return) {
+			if (isDeleting) {
 				// check if the typed name matches the vault name
 				const vaultToDelete = vaultMetadataList[selectedTableIndex];
 				if (buffer.content === vaultToDelete?.name) {
@@ -92,10 +115,19 @@ export const Vaults = () => {
 					}
 					performDelete(vaultToDelete);
 				}
-				// reset delete state
+				// reset delete state - buffer will disable automatically
 				setIsDeleting(false);
-				return;
+			} else if (isEnteringPassword) {
+				// try to open vault with entered password
+				const selectedVault = vaultMetadataList[selectedTableIndex];
+				if (selectedVault && buffer.content) {
+					performOpenVault(selectedVault, buffer.content);
+				}
+				// reset password entry state
+				setIsEnteringPassword(false);
 			}
+			clearBuffer();
+			return;
 		}
 
 		if (!buffer.isActive) {
@@ -122,7 +154,7 @@ export const Vaults = () => {
 	});
 
 	const handleOpen = () => {
-		setCurrentScreen(Screens.PASSWORD_MENU);
+		setIsEnteringPassword(true);
 	};
 
 	const handleEdit = () => {
@@ -130,7 +162,7 @@ export const Vaults = () => {
 		setSelectedVault(vaultMetadataList[selectedTableIndex] ?? null);
 	};
 
-	const handleCreate = () => {
+	const handleNew = () => {
 		setCurrentScreen(Screens.EDIT_VAULT_MENU);
 		setSelectedVault(null);
 	};
@@ -145,10 +177,17 @@ export const Vaults = () => {
 		}
 	}, [isDeleting]);
 
+	useEffect(() => {
+		if (isEnteringPassword) {
+			enableBuffer(true, true, PASSWORD_MAX_LENGTH); // hidden=true for password, longer length
+		}
+	}, [isEnteringPassword]);
+
 	// watch for when buffer becomes inactive (escape was pressed)
 	useEffect(() => {
 		if (!buffer.isActive) {
 			setIsDeleting(false);
+			setIsEnteringPassword(false);
 		}
 	}, [buffer.isActive]);
 
@@ -156,8 +195,8 @@ export const Vaults = () => {
 		{shortcut: 'b', tag: 'Back', func: goBack},
 		{shortcut: 'o', tag: 'Open', func: handleOpen},
 		{shortcut: 'e', tag: 'Edit', func: handleEdit},
-		{shortcut: 'c', tag: 'Create', func: handleCreate},
-		{shortcut: 'd', tag: 'Delete', func: handleDelete},
+		{shortcut: 'n', tag: 'New', func: handleNew},
+		{shortcut: 'd', tag: 'Del.', func: handleDelete},
 	];
 
 	return (
@@ -179,7 +218,13 @@ export const Vaults = () => {
 			<Footer>
 				<BufferLine
 					buffer={buffer}
-					label={isDeleting ? `Type vault name to delete` : 'Delete'}
+					label={
+						isDeleting
+							? `Enter vault name to delete`
+							: isEnteringPassword
+							? `Enter vault password`
+							: 'Input'
+					}
 				/>
 				<Controls
 					controls={controls}
