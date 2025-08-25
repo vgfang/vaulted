@@ -6,9 +6,15 @@ type TableProps = {
 	rows: Record<string, any>[];
 	header?: string[];
 	selectedIndex?: number;
+	isDeleting?: boolean;
 };
 
-export const Table = ({rows, header, selectedIndex}: TableProps) => {
+export const Table = ({
+	rows,
+	header,
+	selectedIndex,
+	isDeleting,
+}: TableProps) => {
 	if (!rows || rows.length === 0) {
 		return (
 			<Box>
@@ -55,7 +61,13 @@ export const Table = ({rows, header, selectedIndex}: TableProps) => {
 					{columns.map((col, i) => (
 						<Box key={i} flexDirection="row">
 							<Text
-								color={selectedIndex === idx ? Colors.SELECTED : Colors.DEFAULT}
+								color={
+									selectedIndex === idx && isDeleting
+										? Colors.ACCENT
+										: selectedIndex === idx
+										? Colors.SELECTED
+										: Colors.DEFAULT
+								}
 							>
 								{pad(String(row[col] ?? ''), colWidths[i] ?? 0)}
 							</Text>

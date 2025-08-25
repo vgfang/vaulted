@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box} from 'ink';
 import {FormInput, FormInputType} from './form-input';
-import {useScreen} from '../hooks/screen-context';
+import {TEXT_INPUT_WIDTH} from '../utils/constants';
 
 export interface FormInput {
 	label: string;
@@ -24,26 +24,25 @@ export const Form = ({
 	inputs: FormInput[];
 	selectedIndex: number;
 }) => {
-	const {cols} = useScreen();
-
 	const maxLabelWidth =
 		Math.max(...inputs.map(input => input.label.length)) + 2;
 
-	// dynamic form width based on screen size, avoiding constants
-	const formWidth = Math.min(cols - 8, Math.max(cols * 0.8, 60));
+	// fixed form width for predictable layout and line wrapping
+	const formWidth = maxLabelWidth + TEXT_INPUT_WIDTH;
 
 	return (
 		<Box flexDirection="column" alignItems="center" paddingX={2} paddingY={1}>
-			{inputs.map((input, index) => (
-				<FormInput
-					key={input.label}
-					{...input}
-					selected={selectedIndex === index}
-					labelWidth={maxLabelWidth}
-					formWidth={formWidth}
-					height={input.height}
-				/>
-			))}
+			<Box width={formWidth} flexDirection="column" alignItems="center">
+				{inputs.map((input, index) => (
+					<FormInput
+						key={input.label}
+						{...input}
+						selected={selectedIndex === index}
+						labelWidth={maxLabelWidth}
+						height={input.height}
+					/>
+				))}
+			</Box>
 		</Box>
 	);
 };

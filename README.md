@@ -10,7 +10,7 @@ $ npm install --global vaulted
 
 ### vaults
 
-_Vaults_ are sqlite database files with sha-256 encrypted password table with master password.
+_Vaults_ are sqlite database files with sha-256 encrypted password table with vault password.
 
 Vault metadata and passwords are included a single file for easy transport / syncing.
 

@@ -1,5 +1,5 @@
 import {Box, Text} from 'ink';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useCustomInput} from '../hooks/custom-input';
 import {Header} from '../components/header';
 import {useScreen} from '../hooks/screen-context';
@@ -24,16 +24,36 @@ import {
 import {Colors} from '../styles/colors';
 import * as core from '../core/core';
 import settings from '../../settings.json';
+import {expandPath} from '../utils/path';
+import {formatDateFriendly, hasValidTimestamp} from '../utils/dates';
 
 export const EditVault = () => {
 	const {goBack} = useScreen();
 
+	const [isLoading, setIsLoading] = useState(true);
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
 		password: '',
+		confirmPassword: '',
 		enableTimestamps: true,
 	});
+
+	const {selectedVault} = useScreen();
+
+	useEffect(() => {
+		if (selectedVault) {
+			setFormData({
+				name: selectedVault.name,
+				description: selectedVault.description ?? '',
+				password: '',
+				confirmPassword: '',
+				enableTimestamps: selectedVault.updatedAt !== 0,
+			});
+		}
+		// set loading to false after we've determined create vs edit mode
+		setIsLoading(false);
+	}, [selectedVault]);
 
 	const updateFormField = (
 		field: keyof typeof formData,
@@ -79,13 +99,33 @@ export const EditVault = () => {
 			label: 'Password',
 			type: FormInputType.PASSWORD,
 			value: formData.password,
-			placeholder: 'Enter vault password',
+			placeholder: selectedVault
+				? 'Enter vault password'
+				: 'Update vault password?',
 			height: 1,
 			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
 			attemptChange: (value: string) => {
 				const validation = dummyValidator(value);
 				if (validation.valid) {
 					updateFormField('password', value);
+				}
+				return validation;
+			},
+			validate: dummyValidator,
+		},
+		{
+			label: 'Confirm Password',
+			type: FormInputType.PASSWORD,
+			value: formData.confirmPassword,
+			placeholder: selectedVault
+				? 'Enter vault password'
+				: 'Update vault password?',
+			height: 1,
+			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
+			attemptChange: (value: string) => {
+				const validation = dummyValidator(value);
+				if (validation.valid) {
+					updateFormField('confirmPassword', value);
 				}
 				return validation;
 			},
@@ -99,8 +139,13 @@ export const EditVault = () => {
 	];
 
 	const handleSave = async () => {
+		if (formData.password !== formData.confirmPassword) {
+			return;
+		}
+
 		try {
-			const filePath = `${settings['vaults-path']}/${formData.name}${VAULT_FILE_EXTENSION}`;
+			const expandedVaultsPath = expandPath(settings['vaults-path']);
+			const filePath = `${expandedVaultsPath}/${formData.name}${VAULT_FILE_EXTENSION}`;
 
 			await core.createVault(
 				filePath,
@@ -127,8 +172,9 @@ export const EditVault = () => {
 	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
 	const [selectedFormIndex, setSelectedFormIndex] = useState(0);
 
-	const {selectedVault} = useScreen();
-	const title = selectedVault ? `Edit Vault: ${selectedVault}` : 'Create Vault';
+	const title = selectedVault
+		? `Edit Vault: ${selectedVault.name}`
+		: 'Create Vault';
 
 	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
 		if (buffer.isActive && key.return) {
@@ -176,27 +222,44 @@ export const EditVault = () => {
 				justifyContent="center"
 				gap={2}
 			>
-				<Form inputs={formInputs} selectedIndex={selectedFormIndex} />
-				{selectedVault && (
+				{!isLoading && (
+					<Form inputs={formInputs} selectedIndex={selectedFormIndex} />
+				)}
+				{!isLoading && selectedVault && (
 					<Box alignItems="flex-start" flexDirection="column">
-						<Text color={Colors.DEFAULT}>
-							The vault contents were last updated on {selectedVault.updatedAt}.
-						</Text>
-						<Text color={Colors.DEFAULT}>
-							The master password was last updated on{' '}
-							{selectedVault.lastPasswordChange}.
-						</Text>
-						<Text color={Colors.DEFAULT}>
-							The vault was created on {selectedVault.createdAt}.
+						{hasValidTimestamp(selectedVault.updatedAt) && (
+							<Text color={Colors.DEFAULT}>
+								The vault contents were last updated{' '}
+								{formatDateFriendly(selectedVault.updatedAt)}.
+							</Text>
+						)}
+						{hasValidTimestamp(selectedVault.lastPasswordChange) && (
+							<Text color={Colors.DEFAULT}>
+								The vault password was last updated{' '}
+								{formatDateFriendly(selectedVault.lastPasswordChange)}.
+							</Text>
+						)}
+						{hasValidTimestamp(selectedVault.createdAt) && (
+							<Text color={Colors.DEFAULT}>
+								The vault was created{' '}
+								{formatDateFriendly(selectedVault.createdAt)}.
+							</Text>
+						)}
+					</Box>
+				)}
+				{!isLoading && (
+					<Box
+						flexDirection="column"
+						alignItems="center"
+						gap={0}
+						paddingTop={1}
+					>
+						<Text dimColor>Generate a strong password using 'g'</Text>
+						<Text dimColor>
+							Password settings are available in the settings menu
 						</Text>
 					</Box>
 				)}
-				<Box flexDirection="column" alignItems="center" gap={0} paddingTop={1}>
-					<Text dimColor>Generate a strong password using 'g'</Text>
-					<Text dimColor>
-						Password settings are available in the settings menu
-					</Text>
-				</Box>
 			</Box>
 			<Footer>
 				<BufferLine buffer={buffer} label="Edit" />

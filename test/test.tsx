@@ -1,17 +1,9 @@
-import React from 'react';
-import chalk from 'chalk';
-import test from 'ava';
-import {render} from 'ink-testing-library';
-import App from './source/app.js';
+import fs from 'fs';
+import os from 'os';
 
-test('greet unknown user', t => {
-	const {lastFrame} = render(<App name={undefined} />);
+const listVaultFilePaths = async (vaultsPath: string) => {
+	const files = fs.readdirSync(vaultsPath);
+	return files.filter(file => file.endsWith('.vault'));
+};
 
-	t.is(lastFrame(), `Hello, ${chalk.green('Stranger')}`);
-});
-
-test('greet user with a name', t => {
-	const {lastFrame} = render(<App name="Jane" />);
-
-	t.is(lastFrame(), `Hello, ${chalk.green('Jane')}`);
-});
+listVaultFilePaths(os.homedir() + '/vaults').then(console.log);

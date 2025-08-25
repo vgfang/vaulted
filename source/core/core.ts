@@ -1,32 +1,70 @@
-import { VaultManager } from "./db/vault-manager";
-import fs from "fs";
+import {VaultManager} from './db/vault-manager';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import {expandPath} from '../utils/path';
+
+export const logToFile = (message: string) => {
+	const logPath = './vaulted-debug.log';
+	const timestamp = new Date().toISOString();
+	fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+};
 
 const listVaultFilePaths = async (vaultsPath: string) => {
-  const files = fs.readdirSync(vaultsPath);
-  return files.filter((file) => file.endsWith(".vault"));
+	vaultsPath = os.homedir() + '/.vaults';
+	logToFile('Looking for vaults in: ' + vaultsPath);
+	logToFile('Directory exists: ' + fs.existsSync(vaultsPath));
+	if (!fs.existsSync(vaultsPath)) {
+		logToFile('Directory does not exist, returning empty array');
+		return [];
+	}
+	const files = fs.readdirSync(vaultsPath);
+	logToFile('All files in directory: ' + JSON.stringify(files));
+	const vaultFiles = files.filter(file => file.endsWith('.vault'));
+	logToFile('Vault files found: ' + JSON.stringify(vaultFiles));
+	return vaultFiles;
 };
 
 export const listVaults = async (vaultsPath: string) => {
-  const vaultFilePaths = await listVaultFilePaths(vaultsPath);
+	const expandedVaultsPath = expandPath(vaultsPath);
+	const vaultFilePaths = await listVaultFilePaths(expandedVaultsPath);
 
-  const vaultPromises = vaultFilePaths.map(async (filePath) => {
-    const fullPath = `${vaultsPath}/${filePath}`;
-    const vaultManager = new VaultManager(fullPath);
-    const metadata = await vaultManager.getMetadata();
-    vaultManager.closeConnection();
-    return metadata[0]; // getMetadata returns array, we want first item
-  });
+	logToFile(`Starting to process ${vaultFilePaths.length} vault files`);
 
-  return await Promise.all(vaultPromises);
+	const vaultPromises = vaultFilePaths.map(async (filePath, index) => {
+		try {
+			const fullPath = `${expandedVaultsPath}/${filePath}`;
+			logToFile(`Processing vault ${index + 1}: ${fullPath}`);
+
+			const vaultManager = new VaultManager(fullPath);
+			const metadata = await vaultManager.getMetadata();
+			logToFile(`Got metadata for ${filePath}: ${JSON.stringify(metadata[0])}`);
+
+			vaultManager.closeConnection();
+			// expecting single row
+			return metadata[0];
+		} catch (error) {
+			logToFile(`Error processing vault ${filePath}: ${error}`);
+			return null;
+		}
+	});
+
+	const results = await Promise.all(vaultPromises);
+	logToFile(`Final results: ${JSON.stringify(results)}`);
+	return results;
 };
 
 export const createVault = async (
-  filePath: string,
-  name: string,
-  description: string,
-  enableTimestamps: boolean
+	filePath: string,
+	name: string,
+	description: string,
+	enableTimestamps: boolean,
 ) => {
-  await VaultManager.createVault(filePath, name, description, enableTimestamps);
+	const dir = path.dirname(filePath);
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, {recursive: true});
+	}
+	await VaultManager.createVault(filePath, name, description, enableTimestamps);
 };
 
-export { VaultManager };
+export {VaultManager};

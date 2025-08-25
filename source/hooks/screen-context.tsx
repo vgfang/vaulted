@@ -32,6 +32,7 @@ type ScreenContextType = {
 	selectedVault: VaultMetadata | null;
 	setSelectedVault: (v: VaultMetadata | null) => void;
 	isTooSmall: boolean;
+	showError: (error: string) => void;
 };
 
 export const ScreenContext = createContext<ScreenContextType | null>(null);
@@ -83,7 +84,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 	}, [stdout]);
 
 	const showError = (error: string) => {
-		//TODO, take up screen space and show error for a few seconds
+		// TODO: show error to user in UI
 	};
 
 	return (
@@ -98,6 +99,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 				selectedVault,
 				setSelectedVault,
 				isTooSmall,
+				showError,
 			}}
 		>
 			{children}

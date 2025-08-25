@@ -8,5 +8,5 @@ export type Password = typeof passwordsTable.$inferSelect;
 export type NewVaultMetadata = typeof metadataTable.$inferInsert;
 export type NewPassword = typeof passwordsTable.$inferInsert;
 
-// re-export core types for convenience
-export type {VaultState} from '../core/db/types';
+// vault state types
+export type VaultState = 'locked' | 'unlocked' | 'not created';

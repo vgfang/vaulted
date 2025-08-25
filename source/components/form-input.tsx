@@ -10,7 +10,6 @@ type FormInputProps = {
 	placeholder?: string;
 	labelWidth?: number;
 	height?: number;
-	formWidth?: number;
 };
 
 export enum FormInputType {
@@ -36,14 +35,12 @@ export const FormInput = ({
 	selected = false,
 	labelWidth = 20,
 	height = 1,
-	formWidth = 60,
 }: FormInputProps) => {
 	// pad the label to the specified width
 	const paddedLabel = `${label}:`.padEnd(labelWidth);
 
-	// limit input width to max 32 characters
-	const maxInputWidth = 32;
-	const valueWidth = Math.min(maxInputWidth, formWidth - labelWidth);
+	// use exactly 32 characters for input width for consistent layout
+	const valueWidth = 32;
 
 	// calculate dynamic height based on content length
 	const calculateHeight = () => {
@@ -60,7 +57,7 @@ export const FormInput = ({
 
 	return (
 		<Box
-			width={formWidth}
+			width={labelWidth + valueWidth}
 			flexDirection="row"
 			height={dynamicHeight}
 			paddingY={0}
