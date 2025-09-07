@@ -2,6 +2,10 @@ import React, {createContext, useContext, useEffect, useState} from 'react';
 import {useStdout} from 'ink';
 import {MINIMUM_WIDTH, MINIMUM_HEIGHT} from '@/utils/constants';
 import {VaultMetadata} from '@/types';
+import {Password} from '@/types';
+import {ToastLineType} from '@/components/toast-line';
+
+const TOAST_DURATION = 3;
 
 export enum Screens {
 	TITLE = 'title',
@@ -24,6 +28,12 @@ const SCREEN_NAVIGATION: Record<Screens, Screens | null> = {
 	[Screens.HELP]: Screens.TITLE,
 };
 
+interface Toast {
+	type: ToastLineType;
+	message: string;
+	duration: number;
+}
+
 type ScreenContextType = {
 	currentScreen: Screens;
 	previousScreen: Screens | null;
@@ -36,6 +46,12 @@ type ScreenContextType = {
 	isTooSmall: boolean;
 	showError: (error: string) => void;
 	timeUntilLockout: number;
+	selectedPassword: Password | null;
+	setSelectedPassword: (p: Password | null) => void;
+	toast: Toast;
+	setToast: (t: Toast) => void;
+	showToast: (message: string, type?: ToastLineType, duration?: number) => void;
+	clearToast: () => void;
 };
 
 export const ScreenContext = createContext<ScreenContextType | null>(null);
@@ -51,13 +67,23 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 	const [selectedVault, setSelectedVault] = useState<VaultMetadata | null>(
 		null,
 	);
+	const [selectedPassword, setSelectedPassword] = useState<Password | null>(
+		null,
+	);
 	const [currentScreen, setCurrentScreenState] = useState<Screens>(
 		Screens.TITLE,
 	);
 	const [previousScreen, setPreviousScreen] = useState<Screens | null>(null);
 
+	const [toast, setToast] = useState<Toast>({
+		type: ToastLineType.INFO,
+		message: '',
+		duration: TOAST_DURATION,
+	});
+
 	// TODO: add time until lockout
-	const [timeUntilLockout, setTimeUntilLockout] = useState<number>(0);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const [timeUntilLockout, setTimeUntilLockout] = useState<number>(0); // TODO: implement lockout timer
 
 	// Enhanced setCurrentScreen that tracks previous screen
 	const setCurrentScreen = (newScreen: Screens) => {
@@ -89,8 +115,37 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 		};
 	}, [stdout]);
 
+	// Auto-dismiss toast after duration
+	useEffect(() => {
+		if (toast.message.trim() !== '' && toast.duration > 0) {
+			const timeoutId = setTimeout(() => {
+				setToast({
+					type: ToastLineType.INFO,
+					message: '',
+					duration: TOAST_DURATION,
+				});
+			}, toast.duration * 1000);
+
+			return () => clearTimeout(timeoutId);
+		}
+		return undefined;
+	}, [toast.message, toast.duration]);
+
 	const showError = (error: string) => {
-		// TODO: show error to user in UI
+		// TODO: show error to user in UI via toast or notification
+		console.error('Error:', error); // temporary logging
+	};
+
+	const showToast = (
+		message: string,
+		type: ToastLineType = ToastLineType.INFO,
+		duration: number = TOAST_DURATION,
+	) => {
+		setToast({type, message, duration});
+	};
+
+	const clearToast = () => {
+		setToast({type: ToastLineType.INFO, message: '', duration: TOAST_DURATION});
 	};
 
 	return (
@@ -107,6 +162,12 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 				isTooSmall,
 				showError,
 				timeUntilLockout,
+				selectedPassword,
+				setSelectedPassword,
+				toast,
+				setToast,
+				showToast,
+				clearToast,
 			}}
 		>
 			{children}

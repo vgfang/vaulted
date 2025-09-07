@@ -1,27 +1,27 @@
-import React, {useEffect, useState} from 'react';
+import {VaultMetadata} from '@/types';
 import {Box} from 'ink';
-import {useCustomInput} from '../hooks/custom-input';
+import React, {useEffect, useState} from 'react';
+import settings from '../../settings.json';
+import {BufferLine} from '../components/buffer-line';
+import {Control, Controls} from '../components/controls';
 import {Footer} from '../components/footer';
 import {Header} from '../components/header';
 import {Table} from '../components/table';
-import {BufferLine} from '../components/buffer-line';
+import * as core from '../core/core';
+import {useCustomInput} from '../hooks/custom-input';
+import {Screens, useScreen} from '../hooks/screen-context';
+import {
+	CONTROL_WIDTH,
+	NAME_MAX_LENGTH,
+	PASSWORD_MAX_LENGTH,
+} from '../utils/constants';
+import {formatDate, hasValidTimestamp} from '../utils/dates';
 import {
 	navigateEnter,
 	navigateLeftRight,
 	navigateUpDown,
 	shortcutControl,
 } from '../utils/navigation';
-import {Screens, useScreen} from '../hooks/screen-context';
-import {Controls, Control} from '../components/controls';
-import {
-	CONTROL_WIDTH,
-	NAME_MAX_LENGTH,
-	PASSWORD_MAX_LENGTH,
-} from '../utils/constants';
-import {VaultMetadata} from '@/types';
-import * as core from '../core/core';
-import settings from '../../settings.json';
-import {formatDate, hasValidTimestamp} from '../utils/dates';
 import {expandPath} from '../utils/path';
 
 export const Vaults = () => {

@@ -19,13 +19,12 @@ export enum FormInputType {
 	PASSWORD,
 }
 
-export enum CheckboxState {
-	CHECKED = 'checked',
-	UNCHECKED = 'unchecked',
-}
-
 const hidePassword = (password: string) => {
 	return '*'.repeat(password.length);
+};
+
+export const toggleCheckbox = (value: boolean) => {
+	return !value;
 };
 
 export const FormInput = ({
@@ -46,7 +45,7 @@ export const FormInput = ({
 
 	// calculate dynamic height based on content length
 	const calculateHeight = () => {
-		if (value) {
+		if (value && type !== FormInputType.CHECKBOX) {
 			const contentToDisplay =
 				type === FormInputType.PASSWORD && !showPasswords
 					? hidePassword(value)
@@ -72,7 +71,7 @@ export const FormInput = ({
 					<>
 						<Text dimColor>{'['}</Text>
 						<Text color={selected ? Colors.SELECTED : Colors.DEFAULT}>
-							{value === CheckboxState.CHECKED ? '✓' : '✗'}
+							{value === 'true' ? '✓' : '✗'}
 						</Text>
 						<Text dimColor>{']'}</Text>
 					</>

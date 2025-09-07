@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box} from 'ink';
-import {FormInput, FormInputType} from './form-input';
+import {FormInput, FormInputType, toggleCheckbox} from './form-input';
 import {TEXT_INPUT_WIDTH} from '../utils/constants';
 
 export interface FormInput {
@@ -16,6 +16,8 @@ export interface FormInput {
 	validate?: (value: string) => {valid: boolean; error?: string};
 	height?: number;
 }
+
+export {toggleCheckbox};
 
 export const Form = ({
 	inputs,

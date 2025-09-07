@@ -11,7 +11,7 @@ import {
 	shortcutControl,
 } from '../utils/navigation';
 import {BufferLine} from '../components/buffer-line';
-import {FormInputType} from '../components/form-input';
+import {FormInputType, toggleCheckbox} from '../components/form-input';
 import {Form, type FormInput} from '../components/form';
 import {dummyValidator} from '../utils/input-validators';
 import {
@@ -26,6 +26,7 @@ import * as core from '../core/core';
 import settings from '../../settings.json';
 import {expandPath} from '../utils/path';
 import {formatDateFriendly, hasValidTimestamp} from '../utils/dates';
+import {generatePassword} from '@/utils/passwords';
 
 export const EditVault = () => {
 	const {goBack} = useScreen();
@@ -136,6 +137,12 @@ export const EditVault = () => {
 			label: 'Enable Timestamps',
 			type: FormInputType.CHECKBOX,
 			value: formData.enableTimestamps.toString(),
+			onEdit: () => {
+				updateFormField(
+					'enableTimestamps',
+					toggleCheckbox(formData.enableTimestamps),
+				);
+			},
 		},
 	];
 
@@ -165,11 +172,16 @@ export const EditVault = () => {
 	const handleToggleView = () => {
 		setPasswordVisible(prev => !prev);
 	};
+	const handleGeneratePassword = () => {
+		const newPassword = generatePassword(16);
+		updateFormField('password', newPassword);
+		updateFormField('confirmPassword', newPassword);
+	};
 
 	const controls: Control[] = [
 		{shortcut: 'b', tag: 'Back', func: goBack},
 		{shortcut: 'e', tag: 'Edit', func: () => {}},
-		{shortcut: 'g', tag: 'Gen.', func: () => {}},
+		{shortcut: 'g', tag: 'Gen.', func: handleGeneratePassword},
 		{shortcut: 'v', tag: 'View', func: handleToggleView},
 		{shortcut: 's', tag: 'Save', func: handleSave},
 	];

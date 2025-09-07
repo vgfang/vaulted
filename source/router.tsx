@@ -10,6 +10,7 @@ import {Help} from './pages/help.js';
 import {Settings} from './pages/settings.js';
 import {MINIMUM_WIDTH, MINIMUM_HEIGHT, TITLE} from './utils/constants.js';
 import {useCustomInput} from './hooks/custom-input.js';
+import {EditPassword} from './pages/edit-password.js';
 
 export const Router = () => {
 	const {currentScreen, cols, rows, isTooSmall} = useScreen();
@@ -58,6 +59,7 @@ export const Router = () => {
 			{currentScreen === Screens.VAULT_MENU && <Vaults />}
 			{currentScreen === Screens.EDIT_VAULT_MENU && <EditVault />}
 			{currentScreen === Screens.PASSWORD_MENU && <Passwords />}
+			{currentScreen === Screens.EDIT_PASSWORD_MENU && <EditPassword />}
 			{currentScreen === Screens.SETTINGS && <Settings />}
 			{currentScreen === Screens.HELP && <Help />}
 		</Box>
