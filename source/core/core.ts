@@ -41,15 +41,20 @@ export const listVaults = async (vaultsPath: string) => {
 			logToFile(`Got metadata for ${filePath}: ${JSON.stringify(metadata[0])}`);
 
 			vaultManager.closeConnection();
-			// expecting single row
-			return metadata[0];
+			// expecting single row, add filePath to the metadata
+			return {
+				...metadata[0],
+				filePath: fullPath,
+			};
 		} catch (error) {
 			logToFile(`Error processing vault ${filePath}: ${error}`);
 			return null;
 		}
 	});
 
-	const results = await Promise.all(vaultPromises);
+	let results = await Promise.all(vaultPromises);
+	results = results.filter(result => result !== null);
+	results.sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0));
 	logToFile(`Final results: ${JSON.stringify(results)}`);
 	return results;
 };

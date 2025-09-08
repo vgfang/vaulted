@@ -23,7 +23,8 @@ import {
 import {generatePassword} from '../utils/passwords';
 
 export const EditPassword = () => {
-	const {goBack, selectedPassword, selectedVault} = useScreen();
+	const {goBack, selectedPassword, selectedVault, currentVaultManager} =
+		useScreen();
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [formData, setFormData] = useState({
@@ -159,8 +160,18 @@ export const EditPassword = () => {
 		}
 
 		try {
-			// TODO: implement actual password save functionality
-			// await core.savePassword(formData);
+			if (!currentVaultManager) {
+				console.error('No vault manager available');
+				return;
+			}
+
+			await currentVaultManager.addPassword(
+				formData.name,
+				formData.email,
+				formData.password,
+				formData.description,
+				formData.isFavorite,
+			);
 
 			// success - go back to passwords list
 			goBack();

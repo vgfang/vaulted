@@ -1,4 +1,5 @@
 import {drizzle} from 'drizzle-orm/libsql';
+import {desc} from 'drizzle-orm';
 import {Client, createClient} from '@libsql/client';
 import {metadataTable, passwordsTable, createTables} from './schema';
 import {VaultMetadata, Password} from '../../types';
@@ -53,33 +54,22 @@ class VaultManager {
 
 	getMetadata = async (): Promise<VaultMetadata[]> => {
 		const metadata = await this.db.select().from(metadataTable);
-		return metadata;
+		// Add filePath to each metadata record
+		return metadata.map(meta => ({
+			...meta,
+			filePath: this.filePath,
+		}));
 	};
 
-	getPasswords = async (
-		searchString: string = '',
-		isFavorite: boolean = false,
-	): Promise<Password[]> => {
+	getPasswords = async (): Promise<Password[]> => {
 		if (this.currentlyLocked) {
 			throw new Error('Vault is locked');
 		}
 		let passwords: Password[] = [];
-		if (isFavorite) {
-			passwords = await this.db
-				.select()
-				.from(passwordsTable)
-				.where(eq(passwordsTable.isFavorite, 1));
-		} else {
-			passwords = await this.db.select().from(passwordsTable);
-		}
-
-		// TODO: fuzzy search library
-		// if (searchString) {
-		//   passwords = passwords.filter((password) => {
-		//     return password.name.toLowerCase().includes(searchString.toLowerCase());
-		//   });
-		// }
-
+		passwords = await this.db
+			.select()
+			.from(passwordsTable)
+			.orderBy(desc(passwordsTable.updatedAt));
 		return passwords;
 	};
 
@@ -91,7 +81,7 @@ class VaultManager {
 		return this.filePath;
 	};
 
-	unlockVault = async (password: string): Promise<void> => {
+	unlockVault = async (_password: string): Promise<void> => {
 		// TODO: verify password and decrypt
 		this.currentlyLocked = false;
 
@@ -149,8 +139,20 @@ class VaultManager {
 	};
 
 	// password crud
-	addPassword = async (password: Password): Promise<void> => {
-		await this.db.insert(passwordsTable).values(password);
+	addPassword = async (
+		name: string,
+		email: string,
+		password: string,
+		description: string,
+		isFavorite: boolean,
+	): Promise<void> => {
+		await this.db.insert(passwordsTable).values({
+			name,
+			email,
+			password,
+			description,
+			isFavorite: isFavorite ? 1 : 0,
+		});
 		await this.updateUpdatedAt();
 	};
 	putPassword = async (password: Password): Promise<void> => {

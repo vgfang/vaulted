@@ -37,7 +37,8 @@ export const Vaults = () => {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isEnteringPassword, setIsEnteringPassword] = useState(false);
 
-	const {setCurrentScreen, goBack, setSelectedVault} = useScreen();
+	const {setCurrentScreen, goBack, setSelectedVault, setCurrentVaultManager} =
+		useScreen();
 
 	const performDelete = async (vault: VaultMetadata) => {
 		try {
@@ -56,16 +57,14 @@ export const Vaults = () => {
 
 	const performOpenVault = async (vault: VaultMetadata, password: string) => {
 		try {
-			// const expandedVaultsPath = expandPath(settings['vaults-path']);
-			// const filePath = `${expandedVaultsPath}/${vault.name}.vault`;
+			// Create vault manager and try to unlock with password
+			const vaultManager = new core.VaultManager(vault.filePath);
+			await vaultManager.unlockVault(password);
 
-			// create vault manager and try to open with password
-			// const vaultManager = new core.VaultManager(filePath);
-			// await vaultManager.openVault(password);
-
+			// Store the unlocked vault manager in context for session use
+			setCurrentVaultManager(vaultManager);
 			setSelectedVault(vault);
 			setCurrentScreen(Screens.PASSWORD_MENU);
-			// vaultManager.closeConnection();
 		} catch (error) {
 			console.error('Failed to open vault:', error);
 			// TODO: show error to user (wrong password, etc.)

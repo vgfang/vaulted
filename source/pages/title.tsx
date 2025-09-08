@@ -30,7 +30,7 @@ export const Title = () => {
 			func: () => setCurrentScreen(Screens.SETTINGS),
 		},
 		{shortcut: 'h', tag: 'Help', func: () => setCurrentScreen(Screens.HELP)},
-		{shortcut: 'q', tag: 'Quit', func: () => {}},
+		{shortcut: 'q', tag: 'Quit', func: () => quit()},
 	];
 
 	const {setCurrentScreen} = useScreen();
@@ -38,7 +38,7 @@ export const Title = () => {
 	const quote = useRef(randomQuote());
 	const [selectedMenuIndex, setSelectedMenuIndex] = useState(0);
 
-	useCustomInput((input, key) => {
+	const {quit} = useCustomInput((input, key) => {
 		const shortcutHandled = shortcutControl(input, controls);
 		if (!shortcutHandled) {
 			navigateEnter(key, selectedMenuIndex, controls);

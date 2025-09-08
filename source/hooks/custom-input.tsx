@@ -14,11 +14,13 @@ export const useCustomInput = (handler: (input: string, key: any) => void) => {
 	const [isBufferHidden, setIsBufferHidden] = useState(false);
 	const [bufferMaxLength, setBufferMaxLength] = useState(BUFFER_MAX_LENGTH);
 
+	const quit = () => {
+		process.exit(0);
+	};
+
 	useInput((input, key) => {
 		if (input === 'q' && !isBufferActive) {
-			process.stdout.write('\x1b[2J\x1b[H\x1b[0m');
-			process.stdout.write('\n');
-			process.exit(0);
+			quit();
 		}
 
 		if (isBufferActive) {
@@ -69,5 +71,6 @@ export const useCustomInput = (handler: (input: string, key: any) => void) => {
 		enableBuffer,
 		clearBuffer,
 		setIsBufferHidden,
+		quit,
 	};
 };

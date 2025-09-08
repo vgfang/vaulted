@@ -11,6 +11,7 @@ import {Settings} from './pages/settings.js';
 import {MINIMUM_WIDTH, MINIMUM_HEIGHT, TITLE} from './utils/constants.js';
 import {useCustomInput} from './hooks/custom-input.js';
 import {EditPassword} from './pages/edit-password.js';
+import {ToastLine} from './components/toast-line.js';
 
 export const Router = () => {
 	const {currentScreen, cols, rows, isTooSmall} = useScreen();
@@ -55,6 +56,7 @@ export const Router = () => {
 			borderStyle="round"
 			borderColor={Colors.BORDER}
 		>
+			<ToastLine />
 			{currentScreen === Screens.TITLE && <Title />}
 			{currentScreen === Screens.VAULT_MENU && <Vaults />}
 			{currentScreen === Screens.EDIT_VAULT_MENU && <EditVault />}

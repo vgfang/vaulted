@@ -4,6 +4,7 @@ import {MINIMUM_WIDTH, MINIMUM_HEIGHT} from '@/utils/constants';
 import {VaultMetadata} from '@/types';
 import {Password} from '@/types';
 import {ToastLineType} from '@/components/toast-line';
+import {VaultManager} from '@/core/core';
 
 const TOAST_DURATION = 3;
 
@@ -43,6 +44,8 @@ type ScreenContextType = {
 	rows: number;
 	selectedVault: VaultMetadata | null;
 	setSelectedVault: (v: VaultMetadata | null) => void;
+	currentVaultManager: VaultManager | null;
+	setCurrentVaultManager: (vm: VaultManager | null) => void;
 	isTooSmall: boolean;
 	showError: (error: string) => void;
 	timeUntilLockout: number;
@@ -70,6 +73,8 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 	const [selectedPassword, setSelectedPassword] = useState<Password | null>(
 		null,
 	);
+	const [currentVaultManager, setCurrentVaultManager] =
+		useState<VaultManager | null>(null);
 	const [currentScreen, setCurrentScreenState] = useState<Screens>(
 		Screens.TITLE,
 	);
@@ -85,9 +90,20 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [timeUntilLockout, setTimeUntilLockout] = useState<number>(0); // TODO: implement lockout timer
 
-	// Enhanced setCurrentScreen that tracks previous screen
+	// Enhanced setCurrentScreen that tracks previous screen and handles cleanup
 	const setCurrentScreen = (newScreen: Screens) => {
 		if (newScreen !== currentScreen) {
+			// Close vault manager when leaving password-related screens
+			if (
+				currentScreen === Screens.PASSWORD_MENU ||
+				currentScreen === Screens.EDIT_PASSWORD_MENU
+			) {
+				if (newScreen === Screens.VAULT_MENU || newScreen === Screens.TITLE) {
+					currentVaultManager?.closeConnection();
+					setCurrentVaultManager(null);
+				}
+			}
+
 			setPreviousScreen(currentScreen);
 			setCurrentScreenState(newScreen);
 		}
@@ -97,6 +113,17 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 	const goBack = () => {
 		const backScreen = SCREEN_NAVIGATION[currentScreen];
 		if (backScreen) {
+			// Close vault manager when going back from password-related screens
+			if (
+				currentScreen === Screens.PASSWORD_MENU ||
+				currentScreen === Screens.EDIT_PASSWORD_MENU
+			) {
+				if (backScreen === Screens.VAULT_MENU || backScreen === Screens.TITLE) {
+					currentVaultManager?.closeConnection();
+					setCurrentVaultManager(null);
+				}
+			}
+
 			setPreviousScreen(currentScreen);
 			setCurrentScreenState(backScreen);
 		}
@@ -159,6 +186,8 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 				rows,
 				selectedVault,
 				setSelectedVault,
+				currentVaultManager,
+				setCurrentVaultManager,
 				isTooSmall,
 				showError,
 				timeUntilLockout,
