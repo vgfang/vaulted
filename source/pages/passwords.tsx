@@ -9,6 +9,7 @@ import {Table} from '../components/table';
 import {BufferLine} from '../components/buffer-line';
 import {Password} from '../types';
 import {
+	navigateEnter,
 	navigateLeftRight,
 	navigateUpDown,
 	shortcutControl,
@@ -26,6 +27,7 @@ export const Passwords = () => {
 		selectedVault,
 		currentVaultManager,
 		showToast,
+		currentScreen,
 	} = useScreen();
 
 	const [passwords, setPasswords] = useState<Password[]>([]);
@@ -36,21 +38,23 @@ export const Passwords = () => {
 
 	// Fetch passwords from selected vault using session vault manager
 	useEffect(() => {
-		const fetchPasswords = async () => {
-			if (!selectedVault || !currentVaultManager) return;
+		if (currentScreen === Screens.PASSWORD_MENU) {
+			const fetchPasswords = async () => {
+				if (!selectedVault || !currentVaultManager) return;
 
-			try {
-				const passwords = await currentVaultManager.getPasswords();
-				logToFile('Loaded passwords: ' + JSON.stringify(passwords));
-				setPasswords(passwords);
-			} catch (error) {
-				console.error('Failed to load passwords:', error);
-				setPasswords([]);
-			}
-		};
+				try {
+					const passwords = await currentVaultManager.getPasswords();
+					logToFile('Loaded passwords: ' + JSON.stringify(passwords));
+					setPasswords(passwords);
+				} catch (error) {
+					console.error('Failed to load passwords:', error);
+					setPasswords([]);
+				}
+			};
 
-		fetchPasswords();
-	}, [selectedVault, currentVaultManager]);
+			fetchPasswords();
+		}
+	}, [selectedVault, currentVaultManager, currentScreen]);
 
 	// Transform passwords data for table display
 	const passwordsToDisplay = (passwordList: Password[]) => {
@@ -78,8 +82,15 @@ export const Passwords = () => {
 		setIsDeleting(true);
 	};
 
-	const handleFavorite = () => {
-		// TODO: Implement favorite toggle
+	const handleFavorite = async () => {
+		if (!currentVaultManager) return;
+		await currentVaultManager.toggleFavoritePassword(
+			passwords[selectedTableIndex]?.id || 0,
+			passwords[selectedTableIndex]!.isFavorite === 1,
+		);
+		const wasFavorite = passwords[selectedTableIndex]!.isFavorite === 1;
+		passwords[selectedTableIndex]!.isFavorite = wasFavorite ? 0 : 1;
+		showToast(wasFavorite ? 'password unfavorited' : 'password favorited');
 	};
 
 	const handleSearch = () => {
@@ -132,6 +143,7 @@ export const Passwords = () => {
 					controls.length,
 					setSelectedControlIndex,
 				);
+				navigateEnter(key, selectedControlIndex, controls);
 			}
 		}
 	});

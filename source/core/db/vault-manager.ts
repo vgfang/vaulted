@@ -155,6 +155,18 @@ class VaultManager {
 		});
 		await this.updateUpdatedAt();
 	};
+
+	toggleFavoritePassword = async (
+		id: number,
+		newFavoriteState: boolean,
+	): Promise<void> => {
+		await this.db
+			.update(passwordsTable)
+			.set({isFavorite: newFavoriteState ? 1 : 0})
+			.where(eq(passwordsTable.id, id));
+		await this.updateUpdatedAt();
+	};
+
 	putPassword = async (password: Password): Promise<void> => {
 		await this.db
 			.update(passwordsTable)
@@ -162,6 +174,7 @@ class VaultManager {
 			.where(eq(passwordsTable.id, password.id));
 		await this.updateUpdatedAt();
 	};
+
 	deletePassword = async (password: Password): Promise<void> => {
 		await this.db
 			.delete(passwordsTable)

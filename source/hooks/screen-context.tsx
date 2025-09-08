@@ -81,7 +81,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 	const [previousScreen, setPreviousScreen] = useState<Screens | null>(null);
 
 	const [toast, setToast] = useState<Toast>({
-		type: ToastLineType.INFO,
+		type: ToastLineType.SUCCESS,
 		message: '',
 		duration: TOAST_DURATION,
 	});
@@ -147,7 +147,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 		if (toast.message.trim() !== '' && toast.duration > 0) {
 			const timeoutId = setTimeout(() => {
 				setToast({
-					type: ToastLineType.INFO,
+					type: ToastLineType.SUCCESS,
 					message: '',
 					duration: TOAST_DURATION,
 				});
@@ -165,14 +165,18 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 
 	const showToast = (
 		message: string,
-		type: ToastLineType = ToastLineType.INFO,
+		type: ToastLineType = ToastLineType.SUCCESS,
 		duration: number = TOAST_DURATION,
 	) => {
 		setToast({type, message, duration});
 	};
 
 	const clearToast = () => {
-		setToast({type: ToastLineType.INFO, message: '', duration: TOAST_DURATION});
+		setToast({
+			type: ToastLineType.SUCCESS,
+			message: '',
+			duration: TOAST_DURATION,
+		});
 	};
 
 	return (

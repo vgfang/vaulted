@@ -4,32 +4,43 @@ import {Colors} from '../styles/colors';
 import {useScreen} from '../hooks/screen-context';
 
 export enum ToastLineType {
-	SUCCESS = 'success',
+	SUCCESS = 'info',
 	ERROR = 'error',
 	WARNING = 'warning',
-	INFO = 'info',
 }
+
+const colorMap = {
+	[ToastLineType.SUCCESS]: Colors.ACCENT,
+	[ToastLineType.ERROR]: Colors.ERROR,
+	[ToastLineType.WARNING]: Colors.HIGHLIGHT,
+};
 
 export const ToastLine = () => {
 	const {cols, toast: contextToast} = useScreen();
 	const labelWidth = contextToast.type.length + 2;
 	const contentWidth = cols - labelWidth - 6;
+	const paddingLeft = 2;
 
 	const shouldShow = contextToast.message.trim() !== '';
 
 	return (
-		<Box minHeight={1} flexDirection="row">
+		<Box minHeight={1} paddingLeft={paddingLeft} flexDirection="row">
 			{shouldShow && (
 				<>
 					<Box width={labelWidth}>
-						<Text color={Colors.ACCENT} backgroundColor={Colors.BACKGROUND}>
+						<Text
+							color={Colors.DEFAULT}
+							backgroundColor={colorMap[contextToast.type]}
+						>
 							{contextToast.type}
 						</Text>
-						<Text color={Colors.DEFAULT}>:</Text>
+						<Text color={colorMap[contextToast.type]}>:</Text>
 					</Box>
 
 					<Box width={contentWidth} flexDirection="row">
-						<Text color={Colors.DEFAULT}>{contextToast.message}</Text>
+						<Text color={colorMap[contextToast.type]}>
+							{contextToast.message}
+						</Text>
 					</Box>
 				</>
 			)}

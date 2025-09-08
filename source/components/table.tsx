@@ -1,12 +1,18 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 import {Colors} from '../styles/colors.js';
+import {useScreen} from '../hooks/screen-context';
+import {
+	truncateString,
+	calculateOptimalColumnWidths,
+} from '../utils/string-truncation';
 
 type TableProps = {
 	rows: Record<string, any>[];
 	header: string[];
 	selectedIndex?: number;
 	isDeleting?: boolean;
+	minPadding?: number; // minimum space between table and border
 };
 
 export const Table = ({
@@ -14,7 +20,9 @@ export const Table = ({
 	header,
 	selectedIndex,
 	isDeleting,
+	minPadding = 2,
 }: TableProps) => {
+	const {cols} = useScreen();
 	if (!rows || rows.length === 0) {
 		return (
 			<Box>
@@ -25,12 +33,15 @@ export const Table = ({
 
 	// add index column to the front of headers
 	const columns = ['#', ...header];
-	// calculate column widths, including index column
-	const indexWidth = Math.max(1, String(rows.length).length);
-	const headerColWidths = header.map(col =>
-		Math.max(col.length, ...rows.map(row => String(row[col] ?? '').length)),
+	// calculate optimal column widths based on available space
+	const availableWidth = cols - minPadding * 2; // reserve space for padding
+	const colWidths = calculateOptimalColumnWidths(
+		header,
+		rows,
+		availableWidth,
+		3, // minimum column width
+		3, // separator padding
 	);
-	const colWidths = [indexWidth, ...headerColWidths];
 	const pad = (text: string, width: number) =>
 		text + ' '.repeat(width - text.length);
 	const centerPad = (text: string, width: number) => {
@@ -59,9 +70,12 @@ export const Table = ({
 				<Box key={idx} flexDirection="row">
 					{columns.map((col, i) => {
 						const isIndexColumn = i === 0;
-						const cellValue = isIndexColumn
+						let cellValue = isIndexColumn
 							? String(idx + 1)
 							: String(row[col] ?? '');
+
+						// truncate cell content if it exceeds column width
+						cellValue = truncateString(cellValue, colWidths[i] ?? 0);
 
 						return (
 							<Box key={i} flexDirection="row">

@@ -95,7 +95,7 @@ export const EditPassword = () => {
 			label: 'Password',
 			type: FormInputType.PASSWORD,
 			value: formData.password,
-			placeholder: 'Enter password',
+			placeholder: selectedPassword ? 'Update password' : 'Enter password',
 			height: 1,
 			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
 			attemptChange: (value: string) => {
