@@ -53,24 +53,37 @@ class VaultManager {
 	};
 
 	getMetadata = async (): Promise<VaultMetadata[]> => {
-		const metadata = await this.db.select().from(metadataTable);
-		// Add filePath to each metadata record
-		return metadata.map(meta => ({
-			...meta,
-			filePath: this.filePath,
-		}));
+		try {
+			const metadata = await this.db.select().from(metadataTable);
+			// Add filePath to each metadata record
+			return metadata.map(meta => ({
+				...meta,
+				filePath: this.filePath,
+			}));
+		} catch (error) {
+			throw new Error(
+				`Failed to read vault metadata: ${error}. Vault may be corrupted.`,
+			);
+		}
 	};
 
 	getPasswords = async (): Promise<Password[]> => {
 		if (this.currentlyLocked) {
 			throw new Error('Vault is locked');
 		}
-		let passwords: Password[] = [];
-		passwords = await this.db
-			.select()
-			.from(passwordsTable)
-			.orderBy(desc(passwordsTable.updatedAt));
-		return passwords;
+
+		try {
+			let passwords: Password[] = [];
+			passwords = await this.db
+				.select()
+				.from(passwordsTable)
+				.orderBy(desc(passwordsTable.updatedAt));
+			return passwords;
+		} catch (error) {
+			throw new Error(
+				`Failed to read passwords: ${error}. Vault database may be corrupted. Try creating a new vault or restoring from backup.`,
+			);
+		}
 	};
 
 	getCurrentlyLocked = (): boolean => {
@@ -105,6 +118,22 @@ class VaultManager {
 
 	closeConnection = (): void => {
 		this.client.close();
+	};
+
+	// diagnostic and repair methods
+	checkVaultIntegrity = async (): Promise<{
+		isValid: boolean;
+		error?: string;
+	}> => {
+		try {
+			// try to read metadata
+			await this.db.select().from(metadataTable);
+			// try to count passwords
+			await this.db.select().from(passwordsTable);
+			return {isValid: true};
+		} catch (error) {
+			return {isValid: false, error: `Vault integrity check failed: ${error}`};
+		}
 	};
 
 	// metadata crud

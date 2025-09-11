@@ -6,7 +6,7 @@ import {Password} from '@/types';
 import {ToastLineType} from '@/components/toast-line';
 import {VaultManager} from '@/core/core';
 
-const TOAST_DURATION = 3;
+const TOAST_DURATION = 2;
 
 export enum Screens {
 	TITLE = 'title',
@@ -51,6 +51,10 @@ type ScreenContextType = {
 	timeUntilLockout: number;
 	selectedPassword: Password | null;
 	setSelectedPassword: (p: Password | null) => void;
+	selectedPasswordId: number | null;
+	setSelectedPasswordId: (id: number | null) => void;
+	restorePasswordPosition: (passwords: Password[]) => number;
+	savePasswordPosition: (password: Password | null) => void;
 	toast: Toast;
 	setToast: (t: Toast) => void;
 	showToast: (message: string, type?: ToastLineType, duration?: number) => void;
@@ -71,6 +75,9 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 		null,
 	);
 	const [selectedPassword, setSelectedPassword] = useState<Password | null>(
+		null,
+	);
+	const [selectedPasswordId, setSelectedPasswordId] = useState<number | null>(
 		null,
 	);
 	const [currentVaultManager, setCurrentVaultManager] =
@@ -103,7 +110,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 					setCurrentVaultManager(null);
 				}
 			}
-
+			clearToast();
 			setPreviousScreen(currentScreen);
 			setCurrentScreenState(newScreen);
 		}
@@ -179,6 +186,31 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 		});
 	};
 
+	const restorePasswordPosition = (passwords: Password[]): number => {
+		if (selectedPasswordId !== null && passwords.length > 0) {
+			const passwordIndex = passwords.findIndex(
+				p => p.id === selectedPasswordId,
+			);
+			if (passwordIndex !== -1) {
+				return passwordIndex;
+			} else {
+				// password not found, reset to first row and clear saved ID
+				setSelectedPasswordId(null);
+				return 0;
+			}
+		}
+		// no saved position, start at first row
+		return 0;
+	};
+
+	const savePasswordPosition = (password: Password | null) => {
+		if (password) {
+			setSelectedPasswordId(password.id);
+		} else {
+			setSelectedPasswordId(null);
+		}
+	};
+
 	return (
 		<ScreenContext.Provider
 			value={{
@@ -197,6 +229,10 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 				timeUntilLockout,
 				selectedPassword,
 				setSelectedPassword,
+				selectedPasswordId,
+				setSelectedPasswordId,
+				restorePasswordPosition,
+				savePasswordPosition,
 				toast,
 				setToast,
 				showToast,

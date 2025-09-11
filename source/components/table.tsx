@@ -9,7 +9,7 @@ import {
 
 type TableProps = {
 	rows: Record<string, any>[];
-	header: string[];
+	header: {name: string; minWidth?: number; maxWidth?: number}[];
 	selectedIndex?: number;
 	isDeleting?: boolean;
 	minPadding?: number; // minimum space between table and border
@@ -32,34 +32,55 @@ export const Table = ({
 	}
 
 	// add index column to the front of headers
-	const columns = ['#', ...header];
+	const indexColumn = {name: '#', minWidth: 1, maxWidth: 3};
+	const allColumns = [indexColumn, ...header];
+	const columnNames = allColumns.map(col => col?.name || 'Unknown');
+
 	// calculate optimal column widths based on available space
 	const availableWidth = cols - minPadding * 2; // reserve space for padding
 	const colWidths = calculateOptimalColumnWidths(
-		header,
+		allColumns,
 		rows,
 		availableWidth,
-		3, // minimum column width
 		3, // separator padding
 	);
-	const pad = (text: string, width: number) =>
-		text + ' '.repeat(width - text.length);
+	const pad = (text: string, width: number) => {
+		// safety check - ensure text is a string
+		if (text === null || text === undefined) {
+			text = '';
+		} else if (typeof text !== 'string') {
+			text = String(text);
+		}
+		return text + ' '.repeat(Math.max(0, width - text.length));
+	};
 	const centerPad = (text: string, width: number) => {
+		// safety check - ensure text is a string
+		if (text === null || text === undefined) {
+			text = '';
+		} else if (typeof text !== 'string') {
+			text = String(text);
+		}
+
+		// if text is longer than width, truncate it first
+		if (text.length > width) {
+			text = truncateString(text, width);
+		}
+
 		const padding = width - text.length;
-		const leftPadding = Math.floor(padding / 2);
-		const rightPadding = padding - leftPadding;
+		const leftPadding = Math.max(0, Math.floor(padding / 2));
+		const rightPadding = Math.max(0, padding - leftPadding);
 		return ' '.repeat(leftPadding) + text + ' '.repeat(rightPadding);
 	};
 
 	return (
 		<Box flexDirection="column">
 			<Box flexDirection="row">
-				{columns.map((col, i) => (
+				{columnNames.map((col, i) => (
 					<Box key={i} flexDirection="row">
 						<Text color={Colors.HIGHLIGHT}>
 							{centerPad(col, colWidths[i] ?? 0)}
 						</Text>
-						{i < columns.length - 1 && <Text dimColor> │ </Text>}
+						{i < columnNames.length - 1 && <Text dimColor> │ </Text>}
 					</Box>
 				))}
 			</Box>
@@ -68,7 +89,7 @@ export const Table = ({
 
 			{rows.map((row, idx) => (
 				<Box key={idx} flexDirection="row">
-					{columns.map((col, i) => {
+					{columnNames.map((col, i) => {
 						const isIndexColumn = i === 0;
 						let cellValue = isIndexColumn
 							? String(idx + 1)
@@ -90,7 +111,7 @@ export const Table = ({
 								>
 									{pad(cellValue, colWidths[i] ?? 0)}
 								</Text>
-								{i < columns.length - 1 && <Text dimColor> │ </Text>}
+								{i < columnNames.length - 1 && <Text dimColor> │ </Text>}
 							</Box>
 						);
 					})}

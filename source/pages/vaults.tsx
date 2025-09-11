@@ -27,7 +27,11 @@ import {expandPath} from '../utils/path';
 export const Vaults = () => {
 	const headerTitle = 'Vaults';
 
-	const tableHeader = ['name', 'description', 'last updated'];
+	const tableHeader = [
+		{name: 'name'},
+		{name: 'description'},
+		{name: 'updated', minWidth: 10, maxWidth: 10},
+	];
 
 	const [vaultMetadataList, setVaultMetadataList] = useState<VaultMetadata[]>(
 		[],
@@ -37,8 +41,13 @@ export const Vaults = () => {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isEnteringPassword, setIsEnteringPassword] = useState(false);
 
-	const {setCurrentScreen, goBack, setSelectedVault, setCurrentVaultManager} =
-		useScreen();
+	const {
+		setCurrentScreen,
+		goBack,
+		setSelectedVault,
+		setCurrentVaultManager,
+		showToast,
+	} = useScreen();
 
 	const performDelete = async (vault: VaultMetadata) => {
 		try {
@@ -153,6 +162,7 @@ export const Vaults = () => {
 	});
 
 	const handleOpen = () => {
+		showToast('enter vault password');
 		setIsEnteringPassword(true);
 	};
 

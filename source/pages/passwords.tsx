@@ -24,6 +24,8 @@ export const Passwords = () => {
 		goBack,
 		setCurrentScreen,
 		setSelectedPassword,
+		restorePasswordPosition,
+		savePasswordPosition,
 		selectedVault,
 		currentVaultManager,
 		showToast,
@@ -34,7 +36,12 @@ export const Passwords = () => {
 	const [selectedTableIndex, setSelectedTableIndex] = useState(0);
 	const [isDeleting, setIsDeleting] = useState(false);
 
-	const tableHeader = ['f', 'name', 'email', 'description', 'last updated'];
+	const tableHeader = [
+		{name: 'f', minWidth: 1},
+		{name: 'name'},
+		{name: 'email'},
+		{name: 'updated', minWidth: 10, maxWidth: 10},
+	];
 
 	// Fetch passwords from selected vault using session vault manager
 	useEffect(() => {
@@ -45,7 +52,24 @@ export const Passwords = () => {
 				try {
 					const passwords = await currentVaultManager.getPasswords();
 					logToFile('Loaded passwords: ' + JSON.stringify(passwords));
-					setPasswords(passwords);
+
+					// sort passwords: separate favorites and non-favorites, then sort each cluster by updatedAt
+					const favorites = passwords.filter(p => p.isFavorite === 1);
+					const nonFavorites = passwords.filter(p => p.isFavorite !== 1);
+
+					const sortedFavorites = favorites.sort(
+						(a, b) => b.updatedAt - a.updatedAt,
+					);
+					const sortedNonFavorites = nonFavorites.sort(
+						(a, b) => b.updatedAt - a.updatedAt,
+					);
+
+					const sortedPasswords = [...sortedFavorites, ...sortedNonFavorites];
+					setPasswords(sortedPasswords);
+
+					// restore selected row position using useScreen hook
+					const restoredIndex = restorePasswordPosition(sortedPasswords);
+					setSelectedTableIndex(restoredIndex);
 				} catch (error) {
 					console.error('Failed to load passwords:', error);
 					setPasswords([]);
@@ -56,26 +80,29 @@ export const Passwords = () => {
 		}
 	}, [selectedVault, currentVaultManager, currentScreen]);
 
-	// Transform passwords data for table display
 	const passwordsToDisplay = (passwordList: Password[]) => {
 		return passwordList.map(password => ({
 			f: password.isFavorite == 1 ? '★' : '',
 			name: password.name,
 			email: password.email || '',
-			'date created': hasValidTimestamp(password.createdAt)
-				? formatDate(password.createdAt)
+			updated: hasValidTimestamp(password.updatedAt)
+				? formatDate(password.updatedAt)
 				: 'unknown',
 		}));
 	};
 
 	const handleNew = () => {
-		setCurrentScreen(Screens.EDIT_PASSWORD_MENU);
 		setSelectedPassword(null);
+		savePasswordPosition(null); // clear saved position since we're creating new
+		setCurrentScreen(Screens.EDIT_PASSWORD_MENU);
 	};
 
 	const handleEdit = () => {
+		const selectedPassword = passwords[selectedTableIndex];
+		setSelectedPassword(selectedPassword ?? null);
+		// save current password position for restoration when coming back
+		savePasswordPosition(selectedPassword ?? null);
 		setCurrentScreen(Screens.EDIT_PASSWORD_MENU);
-		setSelectedPassword(passwords[selectedTableIndex] ?? null);
 	};
 
 	const handleDelete = () => {
@@ -84,12 +111,15 @@ export const Passwords = () => {
 
 	const handleFavorite = async () => {
 		if (!currentVaultManager) return;
+		const wasFavorite = passwords[selectedTableIndex]!.isFavorite === 1;
+		const newFavoriteState = !wasFavorite; // toggle to opposite state
+
 		await currentVaultManager.toggleFavoritePassword(
 			passwords[selectedTableIndex]?.id || 0,
-			passwords[selectedTableIndex]!.isFavorite === 1,
+			newFavoriteState,
 		);
-		const wasFavorite = passwords[selectedTableIndex]!.isFavorite === 1;
-		passwords[selectedTableIndex]!.isFavorite = wasFavorite ? 0 : 1;
+		// update favorite status in place (doesn't reorder list until next load)
+		passwords[selectedTableIndex]!.isFavorite = newFavoriteState ? 1 : 0;
 		showToast(wasFavorite ? 'password unfavorited' : 'password favorited');
 	};
 

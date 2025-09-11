@@ -32,7 +32,7 @@ export const useCustomInput = (handler: (input: string, key: any) => void) => {
 				setBuffer(prev => prev.slice(0, -1));
 				return;
 			}
-			if (input && !key.ctrl && !key.meta) {
+			if (input && !key.ctrl && !key.meta && !key.return) {
 				setBuffer(prev => {
 					const newBuffer = prev + input;
 					return newBuffer.length <= bufferMaxLength ? newBuffer : prev;

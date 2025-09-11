@@ -21,10 +21,16 @@ import {
 	CONTROL_WIDTH,
 } from '../utils/constants';
 import {generatePassword} from '../utils/passwords';
+import {ToastLineType} from '../components/toast-line';
 
 export const EditPassword = () => {
-	const {goBack, selectedPassword, selectedVault, currentVaultManager} =
-		useScreen();
+	const {
+		goBack,
+		selectedPassword,
+		selectedVault,
+		currentVaultManager,
+		showToast,
+	} = useScreen();
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [formData, setFormData] = useState({
@@ -45,8 +51,8 @@ export const EditPassword = () => {
 			setFormData({
 				name: selectedPassword.name || '',
 				email: selectedPassword.email || '',
-				password: '',
-				confirmPassword: '',
+				password: selectedPassword.password || '',
+				confirmPassword: selectedPassword.password || '',
 				description: selectedPassword.description || '',
 				isFavorite: Boolean(selectedPassword.isFavorite),
 			});
@@ -161,23 +167,32 @@ export const EditPassword = () => {
 
 		try {
 			if (!currentVaultManager) {
-				console.error('No vault manager available');
+				showToast('No vault manager available', ToastLineType.ERROR);
 				return;
 			}
-
-			await currentVaultManager.addPassword(
-				formData.name,
-				formData.email,
-				formData.password,
-				formData.description,
-				formData.isFavorite,
-			);
-
-			// success - go back to passwords list
+			if (selectedPassword) {
+				const updatedPassword = {
+					...selectedPassword,
+					name: formData.name,
+					email: formData.email,
+					password: formData.password,
+					description: formData.description,
+					isFavorite: formData.isFavorite ? 1 : 0,
+				};
+				await currentVaultManager.putPassword(updatedPassword);
+			} else {
+				await currentVaultManager.addPassword(
+					formData.name,
+					formData.email,
+					formData.password,
+					formData.description,
+					formData.isFavorite,
+				);
+			}
 			goBack();
+			showToast('Password saved', ToastLineType.SUCCESS);
 		} catch (error) {
-			// TODO: show error to user in UI
-			console.error('Failed to save password:', error);
+			showToast('Failed to save password', ToastLineType.ERROR);
 		}
 	};
 
