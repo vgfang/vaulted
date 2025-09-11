@@ -10,10 +10,8 @@ export interface FormInput {
 	placeholder?: string;
 	// this is when the user presses enter on the input to enable
 	onEdit?: () => void;
-	// try to change the value of the input, will run validator
-	attemptChange?: (value: string) => {valid: boolean; error?: string};
-	// validate the value of the input
-	validate?: (value: string) => {valid: boolean; error?: string};
+	// change the value of the input
+	onChange?: (value: string) => void;
 	height?: number;
 }
 

@@ -13,8 +13,10 @@ import {
 import {BufferLine} from '../components/buffer-line';
 import {FormInputType, toggleCheckbox} from '../components/form-input';
 import {Form, type FormInput} from '../components/form';
-import {dummyValidator} from '../utils/input-validators';
+
 import {
+	NAME_MIN_LENGTH,
+	PASSWORD_MIN_LENGTH,
 	NAME_MAX_LENGTH,
 	PASSWORD_MAX_LENGTH,
 	DESCRIPTION_MAX_LENGTH,
@@ -27,9 +29,10 @@ import settings from '../../settings.json';
 import {expandPath} from '../utils/path';
 import {formatDateFriendly, hasValidTimestamp} from '../utils/dates';
 import {generatePassword} from '@/utils/passwords';
+import {ToastLineType} from '@/components/toast-line';
 
 export const EditVault = () => {
-	const {goBack} = useScreen();
+	const {goBack, showToast} = useScreen();
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [formData, setFormData] = useState({
@@ -44,16 +47,31 @@ export const EditVault = () => {
 	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
 	const [selectedFormIndex, setSelectedFormIndex] = useState(0);
 	const [passwordVisible, setPasswordVisible] = useState(false);
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+	const [initialFormData, setInitialFormData] = useState(formData);
+	const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);
 
 	useEffect(() => {
 		if (selectedVault) {
-			setFormData({
+			const newFormData = {
 				name: selectedVault.name,
 				description: selectedVault.description ?? '',
 				password: '',
 				confirmPassword: '',
 				enableTimestamps: selectedVault.updatedAt !== 0,
-			});
+			};
+			setFormData(newFormData);
+			setInitialFormData(newFormData);
+		} else {
+			const newFormData = {
+				name: '',
+				description: '',
+				password: '',
+				confirmPassword: '',
+				enableTimestamps: true,
+			};
+			setFormData(newFormData);
+			setInitialFormData(newFormData);
 		}
 		// set loading to false after we've determined create vs edit mode
 		setIsLoading(false);
@@ -64,7 +82,17 @@ export const EditVault = () => {
 		value: string | boolean,
 	) => {
 		setFormData(prev => ({...prev, [field]: value}));
+		if (isConfirmingDiscard) {
+			clearBuffer();
+			setIsConfirmingDiscard(false);
+		}
 	};
+
+	useEffect(() => {
+		const changed =
+			JSON.stringify(formData) !== JSON.stringify(initialFormData);
+		setHasUnsavedChanges(changed);
+	}, [formData, initialFormData]);
 
 	const formInputs: FormInput[] = [
 		{
@@ -74,14 +102,9 @@ export const EditVault = () => {
 			placeholder: 'Enter vault name',
 			height: 1,
 			onEdit: () => enableBuffer(true, false, NAME_MAX_LENGTH),
-			attemptChange: (value: string) => {
-				const validation = dummyValidator(value);
-				if (validation.valid) {
-					updateFormField('name', value);
-				}
-				return validation;
+			onChange: (value: string) => {
+				updateFormField('name', value);
 			},
-			validate: dummyValidator,
 		},
 		{
 			label: 'Description',
@@ -89,15 +112,13 @@ export const EditVault = () => {
 			value: formData.description,
 			placeholder: 'Enter vault description',
 			height: 2,
-			onEdit: () => enableBuffer(true, false, DESCRIPTION_MAX_LENGTH),
-			attemptChange: (value: string) => {
-				const validation = dummyValidator(value);
-				if (validation.valid) {
-					updateFormField('description', value);
-				}
-				return validation;
+			onEdit: () => {
+				setIsConfirmingDiscard(false);
+				enableBuffer(true, false, DESCRIPTION_MAX_LENGTH);
 			},
-			validate: dummyValidator,
+			onChange: (value: string) => {
+				updateFormField('description', value);
+			},
 		},
 		{
 			label: 'Password',
@@ -107,15 +128,13 @@ export const EditVault = () => {
 				? 'Update vault password'
 				: 'Enter vault password',
 			height: 1,
-			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
-			attemptChange: (value: string) => {
-				const validation = dummyValidator(value);
-				if (validation.valid) {
-					updateFormField('password', value);
-				}
-				return validation;
+			onEdit: () => {
+				setIsConfirmingDiscard(false);
+				enableBuffer(true, true, PASSWORD_MAX_LENGTH);
 			},
-			validate: dummyValidator,
+			onChange: (value: string) => {
+				updateFormField('password', value);
+			},
 		},
 		{
 			label: 'Confirm Password',
@@ -123,15 +142,13 @@ export const EditVault = () => {
 			value: formData.confirmPassword,
 			placeholder: 'Confirm vault password',
 			height: 1,
-			onEdit: () => enableBuffer(true, true, PASSWORD_MAX_LENGTH),
-			attemptChange: (value: string) => {
-				const validation = dummyValidator(value);
-				if (validation.valid) {
-					updateFormField('confirmPassword', value);
-				}
-				return validation;
+			onEdit: () => {
+				setIsConfirmingDiscard(false);
+				enableBuffer(true, true, PASSWORD_MAX_LENGTH);
 			},
-			validate: dummyValidator,
+			onChange: (value: string) => {
+				updateFormField('confirmPassword', value);
+			},
 		},
 		{
 			label: 'Enable Timestamps',
@@ -146,8 +163,53 @@ export const EditVault = () => {
 		},
 	];
 
+	const handleBack = () => {
+		if (!hasUnsavedChanges) {
+			goBack();
+			return;
+		}
+		showToast(
+			"You have unsaved changes. Type 'y' to discard and go back",
+			ToastLineType.WARNING,
+		);
+		setIsConfirmingDiscard(true);
+		enableBuffer(true, false, 1);
+	};
+
 	const handleSave = async () => {
+		if (!formData.name.trim()) {
+			// TODO: show error
+			showToast('name is required', ToastLineType.ERROR);
+			return;
+		}
+
+		if (formData.name.trim().length < NAME_MIN_LENGTH) {
+			// TODO: show error
+			showToast(
+				`name must be at least ${NAME_MIN_LENGTH} characters long`,
+				ToastLineType.ERROR,
+			);
+			return;
+		}
+
+		if (!formData.password.trim()) {
+			// TODO: show error
+			showToast('password is required', ToastLineType.ERROR);
+			return;
+		}
+
+		if (formData.password.length < PASSWORD_MIN_LENGTH) {
+			// TODO: show error
+			showToast(
+				`password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
+				ToastLineType.ERROR,
+			);
+			return;
+		}
+
 		if (formData.password !== formData.confirmPassword) {
+			// TODO: show error
+			showToast('passwords do not match', ToastLineType.ERROR);
 			return;
 		}
 
@@ -162,13 +224,14 @@ export const EditVault = () => {
 				formData.enableTimestamps,
 			);
 
-			// success - go back to vaults list
 			goBack();
+			showToast('vault created', ToastLineType.SUCCESS);
+			setHasUnsavedChanges(false);
 		} catch (error) {
-			// TODO: show error to user in UI
-			console.error('Failed to create vault:', error);
+			showToast('failed to create vault', ToastLineType.ERROR);
 		}
 	};
+
 	const handleToggleView = () => {
 		setPasswordVisible(prev => !prev);
 	};
@@ -179,7 +242,7 @@ export const EditVault = () => {
 	};
 
 	const controls: Control[] = [
-		{shortcut: 'b', tag: 'Back', func: goBack},
+		{shortcut: 'b', tag: 'Back', func: handleBack},
 		{shortcut: 'e', tag: 'Edit', func: () => {}},
 		{shortcut: 'g', tag: 'Gen.', func: handleGeneratePassword},
 		{shortcut: 'v', tag: 'View', func: handleToggleView},
@@ -194,12 +257,17 @@ export const EditVault = () => {
 		if (buffer.isActive && key.return) {
 			// save buffer content to current form field
 			const currentInput = formInputs[selectedFormIndex];
-			if (currentInput?.attemptChange) {
-				const result = currentInput.attemptChange(buffer.content);
-				if (result.valid) {
-					clearBuffer();
-				}
-				// TODO: Handle validation errors if needed
+			currentInput?.onChange?.(buffer.content);
+			clearBuffer();
+			// TODO: Handle validation errors if needed
+			return;
+		}
+		if (isConfirmingDiscard && key.return) {
+			if (buffer.content.toLowerCase() === 'y') {
+				goBack();
+			} else {
+				clearBuffer();
+				setIsConfirmingDiscard(false);
 			}
 			return;
 		}
@@ -280,7 +348,10 @@ export const EditVault = () => {
 				)}
 			</Box>
 			<Footer>
-				<BufferLine buffer={buffer} label="Edit" />
+				<BufferLine
+					buffer={buffer}
+					label={isConfirmingDiscard ? 'Confirm discard (y/n)' : 'Edit'}
+				/>
 				<Controls
 					controls={controls}
 					direction="row"
