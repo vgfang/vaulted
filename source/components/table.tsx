@@ -13,6 +13,8 @@ type TableProps = {
 	selectedIndex?: number;
 	isDeleting?: boolean;
 	minPadding?: number; // minimum space between table and border
+	scrollOffset?: number; // current scroll position
+	maxVisibleRows?: number; // maximum rows to display at once
 };
 
 export const Table = ({
@@ -21,8 +23,10 @@ export const Table = ({
 	selectedIndex,
 	isDeleting,
 	minPadding = 4,
+	scrollOffset = 0,
+	maxVisibleRows,
 }: TableProps) => {
-	const {cols} = useScreen();
+	const {cols, rows: terminalRows} = useScreen();
 	if (!rows || rows.length === 0) {
 		return (
 			<Box>
@@ -44,6 +48,34 @@ export const Table = ({
 		availableWidth,
 		3, // separator padding
 	);
+
+	// calculate available space for table rows
+	const totalRows = rows.length;
+	let calculatedMaxRows = totalRows; // default to showing all
+
+	if (maxVisibleRows !== undefined) {
+		calculatedMaxRows = maxVisibleRows;
+	} else if (terminalRows > 0) {
+		const uiOverhead = 12;
+		calculatedMaxRows = Math.max(3, terminalRows - uiOverhead);
+	}
+
+	const shouldScroll = calculatedMaxRows < totalRows;
+	const availableRows = shouldScroll ? calculatedMaxRows : totalRows;
+	const canScrollDown =
+		shouldScroll && scrollOffset + availableRows < totalRows;
+
+	let visibleRows = [...rows];
+	let startIndex = scrollOffset;
+	let endIndex = Math.min(scrollOffset + availableRows, totalRows);
+
+	if (canScrollDown) {
+		// reserve space for bottom truncation indicator
+		endIndex = Math.min(scrollOffset + availableRows - 1, totalRows);
+	}
+
+	visibleRows = rows.slice(startIndex, endIndex);
+
 	const pad = (text: string, width: number) => {
 		// safety check - ensure text is a string
 		if (text === null || text === undefined) {
@@ -87,36 +119,68 @@ export const Table = ({
 
 			<Text dimColor>{colWidths.map(w => '─'.repeat(w)).join('─┼─')}</Text>
 
-			{rows.map((row, idx) => (
-				<Box key={idx} flexDirection="row">
+			{/* visible rows */}
+			{visibleRows.map((row, idx) => {
+				const actualIndex = startIndex + idx;
+				return (
+					<Box key={actualIndex} flexDirection="row">
+						{columnNames.map((col, i) => {
+							const isIndexColumn = i === 0;
+							let cellValue = isIndexColumn
+								? String(actualIndex + 1)
+								: String(row[col] ?? '');
+
+							// truncate cell content if it exceeds column width
+							cellValue = truncateString(cellValue, colWidths[i] ?? 0);
+
+							return (
+								<Box key={i} flexDirection="row">
+									<Text
+										color={
+											selectedIndex === actualIndex && isDeleting
+												? Colors.ACCENT
+												: selectedIndex === actualIndex
+												? Colors.SELECTED
+												: Colors.DEFAULT
+										}
+									>
+										{pad(cellValue, colWidths[i] ?? 0)}
+									</Text>
+									{i < columnNames.length - 1 && <Text dimColor> │ </Text>}
+								</Box>
+							);
+						})}
+					</Box>
+				);
+			})}
+
+			{/* bottom truncation indicator */}
+			{canScrollDown && (
+				<Box flexDirection="row">
 					{columnNames.map((col, i) => {
 						const isIndexColumn = i === 0;
-						let cellValue = isIndexColumn
-							? String(idx + 1)
-							: String(row[col] ?? '');
+						const isFavoriteColumn = col === 'f'; // favorite column
+						let cellValue: string;
 
-						// truncate cell content if it exceeds column width
-						cellValue = truncateString(cellValue, colWidths[i] ?? 0);
+						if (isIndexColumn) {
+							cellValue = '_';
+						} else if (isFavoriteColumn) {
+							cellValue = '_';
+						} else {
+							cellValue = '...';
+						}
 
 						return (
 							<Box key={i} flexDirection="row">
-								<Text
-									color={
-										selectedIndex === idx && isDeleting
-											? Colors.ACCENT
-											: selectedIndex === idx
-											? Colors.SELECTED
-											: Colors.DEFAULT
-									}
-								>
-									{pad(cellValue, colWidths[i] ?? 0)}
+								<Text color={isIndexColumn ? Colors.DEFAULT : Colors.HIGHLIGHT}>
+									{centerPad(cellValue, colWidths[i] ?? 0)}
 								</Text>
 								{i < columnNames.length - 1 && <Text dimColor> │ </Text>}
 							</Box>
 						);
 					})}
 				</Box>
-			))}
+			)}
 		</Box>
 	);
 };

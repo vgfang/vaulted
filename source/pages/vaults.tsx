@@ -37,6 +37,7 @@ export const Vaults = () => {
 		[],
 	);
 	const [selectedTableIndex, setSelectedTableIndex] = useState(0);
+	const [scrollOffset, setScrollOffset] = useState(0);
 	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isEnteringPassword, setIsEnteringPassword] = useState(false);
@@ -47,6 +48,7 @@ export const Vaults = () => {
 		setSelectedVault,
 		setCurrentVaultManager,
 		showToast,
+		rows: terminalRows,
 	} = useScreen();
 
 	const performDelete = async (vault: VaultMetadata) => {
@@ -107,6 +109,41 @@ export const Vaults = () => {
 		};
 		fetchVaults();
 	}, []);
+
+	// calculate how many rows are visible in table (same logic as in table.tsx)
+	const calculateVisibleRows = () => {
+		if (terminalRows > 0) {
+			// UI structure: border(2) + header(3) + table_header(2) + footer(3) + toast(1) + safety_margin(1)
+			const uiOverhead = 12;
+			return Math.max(3, terminalRows - uiOverhead);
+		}
+		return vaultMetadataList.length; // fallback to showing all
+	};
+
+	// auto-scroll when selection changes
+	useEffect(() => {
+		const visibleRows = calculateVisibleRows();
+		const shouldScroll = vaultMetadataList.length > visibleRows;
+
+		if (shouldScroll) {
+			// when scrolling is active, we show visibleRows-1 data rows + 1 truncation row
+			const visibleDataRows = visibleRows - 1;
+
+			// if selected item is below visible area, scroll down
+			if (selectedTableIndex >= scrollOffset + visibleDataRows) {
+				setScrollOffset(selectedTableIndex - visibleDataRows + 1);
+			}
+			// if selected item is above visible area, scroll up
+			else if (selectedTableIndex < scrollOffset) {
+				setScrollOffset(selectedTableIndex);
+			}
+		}
+	}, [
+		selectedTableIndex,
+		vaultMetadataList.length,
+		terminalRows,
+		scrollOffset,
+	]);
 
 	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
 		if (buffer.isActive && key.return) {
@@ -222,6 +259,7 @@ export const Vaults = () => {
 					header={tableHeader}
 					selectedIndex={selectedTableIndex}
 					isDeleting={isDeleting}
+					scrollOffset={scrollOffset}
 				/>
 			</Box>
 			<Footer>

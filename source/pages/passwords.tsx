@@ -31,10 +31,12 @@ export const Passwords = () => {
 		currentVaultManager,
 		showToast,
 		currentScreen,
+		rows: terminalRows,
 	} = useScreen();
 
 	const [passwords, setPasswords] = useState<Password[]>([]);
 	const [selectedTableIndex, setSelectedTableIndex] = useState(0);
+	const [scrollOffset, setScrollOffset] = useState(0);
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const tableHeader = [
@@ -71,6 +73,8 @@ export const Passwords = () => {
 					// restore selected row position using useScreen hook
 					const restoredIndex = restorePasswordPosition(sortedPasswords);
 					setSelectedTableIndex(restoredIndex);
+					// reset scroll when passwords change
+					setScrollOffset(0);
 				} catch (error) {
 					console.error('Failed to load passwords:', error);
 					setPasswords([]);
@@ -144,6 +148,36 @@ export const Passwords = () => {
 	];
 	const [selectedControlIndex, setSelectedControlIndex] = useState(1);
 
+	// calculate how many rows are visible in table (same logic as in table.tsx)
+	const calculateVisibleRows = () => {
+		if (terminalRows > 0) {
+			// UI structure: border(2) + header(3) + table_header(2) + footer(3) + toast(1) + safety_margin(1)
+			const uiOverhead = 12;
+			return Math.max(3, terminalRows - uiOverhead);
+		}
+		return passwords.length; // fallback to showing all
+	};
+
+	// auto-scroll when selection changes
+	useEffect(() => {
+		const visibleRows = calculateVisibleRows();
+		const shouldScroll = passwords.length > visibleRows;
+
+		if (shouldScroll) {
+			// when scrolling is active, we show visibleRows-1 data rows + 1 truncation row
+			const visibleDataRows = visibleRows - 1;
+
+			// if selected item is below visible area, scroll down
+			if (selectedTableIndex >= scrollOffset + visibleDataRows) {
+				setScrollOffset(selectedTableIndex - visibleDataRows + 1);
+			}
+			// if selected item is above visible area, scroll up
+			else if (selectedTableIndex < scrollOffset) {
+				setScrollOffset(selectedTableIndex);
+			}
+		}
+	}, [selectedTableIndex, passwords.length, terminalRows, scrollOffset]);
+
 	const title = selectedVault ? `Vault: ${selectedVault.name}` : 'Error';
 
 	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
@@ -179,9 +213,13 @@ export const Passwords = () => {
 										setPasswords(sortedPasswords);
 										// Adjust selected index if necessary
 										if (selectedTableIndex >= sortedPasswords.length) {
-											setSelectedTableIndex(
-												Math.max(0, sortedPasswords.length - 1),
-											);
+											const newIndex = Math.max(0, sortedPasswords.length - 1);
+											setSelectedTableIndex(newIndex);
+											// adjust scroll offset if needed
+											const visibleRows = calculateVisibleRows();
+											if (newIndex < scrollOffset) {
+												setScrollOffset(Math.max(0, newIndex));
+											}
 										}
 									} catch (error) {
 										console.error('Failed to reload passwords:', error);
@@ -256,6 +294,7 @@ export const Passwords = () => {
 					header={tableHeader}
 					selectedIndex={selectedTableIndex}
 					isDeleting={isDeleting}
+					scrollOffset={scrollOffset}
 				/>
 			</Box>
 			<Footer>
