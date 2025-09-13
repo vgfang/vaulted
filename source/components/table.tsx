@@ -46,12 +46,12 @@ export const Table = ({
 		allColumns,
 		rows,
 		availableWidth,
-		3, // separator padding
+		3,
 	);
 
 	// calculate available space for table rows
 	const totalRows = rows.length;
-	let calculatedMaxRows = totalRows; // default to showing all
+	let calculatedMaxRows = totalRows;
 
 	if (maxVisibleRows !== undefined) {
 		calculatedMaxRows = maxVisibleRows;
@@ -119,7 +119,6 @@ export const Table = ({
 
 			<Text dimColor>{colWidths.map(w => '─'.repeat(w)).join('─┼─')}</Text>
 
-			{/* visible rows */}
 			{visibleRows.map((row, idx) => {
 				const actualIndex = startIndex + idx;
 				return (
@@ -154,12 +153,11 @@ export const Table = ({
 				);
 			})}
 
-			{/* bottom truncation indicator */}
 			{canScrollDown && (
 				<Box flexDirection="row">
 					{columnNames.map((col, i) => {
 						const isIndexColumn = i === 0;
-						const isFavoriteColumn = col === 'f'; // favorite column
+						const isFavoriteColumn = col === 'f';
 						let cellValue: string;
 
 						if (isIndexColumn) {
