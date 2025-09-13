@@ -18,6 +18,7 @@ import {CONTROL_WIDTH} from '../utils/constants';
 import {formatDate, hasValidTimestamp} from '../utils/dates';
 import {logToFile} from '@/core/core';
 import {copyToClipboard} from '@/utils/clipboard';
+import {ToastLineType} from '../components/toast-line';
 
 export const Passwords = () => {
 	const {
@@ -148,7 +149,56 @@ export const Passwords = () => {
 	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
 		if (buffer.isActive && key.return) {
 			if (isDeleting) {
-				// TODO: Implement password deletion confirmation
+				if (buffer.content.toLowerCase() === 'y') {
+					// Perform deletion
+					const passwordToDelete = passwords[selectedTableIndex];
+					if (passwordToDelete && currentVaultManager) {
+						currentVaultManager
+							.deletePassword(passwordToDelete)
+							.then(() => {
+								showToast('Password deleted', ToastLineType.SUCCESS);
+								// Refresh passwords list
+								const fetchPasswords = async () => {
+									if (!selectedVault || !currentVaultManager) return;
+									try {
+										const passwords = await currentVaultManager.getPasswords();
+										const favorites = passwords.filter(p => p.isFavorite === 1);
+										const nonFavorites = passwords.filter(
+											p => p.isFavorite !== 1,
+										);
+										const sortedFavorites = favorites.sort(
+											(a, b) => b.updatedAt - a.updatedAt,
+										);
+										const sortedNonFavorites = nonFavorites.sort(
+											(a, b) => b.updatedAt - a.updatedAt,
+										);
+										const sortedPasswords = [
+											...sortedFavorites,
+											...sortedNonFavorites,
+										];
+										setPasswords(sortedPasswords);
+										// Adjust selected index if necessary
+										if (selectedTableIndex >= sortedPasswords.length) {
+											setSelectedTableIndex(
+												Math.max(0, sortedPasswords.length - 1),
+											);
+										}
+									} catch (error) {
+										console.error('Failed to reload passwords:', error);
+										showToast(
+											'Failed to reload passwords',
+											ToastLineType.ERROR,
+										);
+									}
+								};
+								fetchPasswords();
+							})
+							.catch(error => {
+								console.error('Failed to delete password:', error);
+								showToast('Failed to delete password', ToastLineType.ERROR);
+							});
+					}
+				}
 				setIsDeleting(false);
 			}
 			clearBuffer();
@@ -181,7 +231,7 @@ export const Passwords = () => {
 	// Enable buffer for deletion confirmation
 	useEffect(() => {
 		if (isDeleting) {
-			enableBuffer(true, false, 50); // not hidden for confirmation text
+			enableBuffer(true, false, 1); // not hidden for confirmation text
 		}
 	}, [isDeleting]);
 
@@ -211,7 +261,7 @@ export const Passwords = () => {
 			<Footer>
 				<BufferLine
 					buffer={buffer}
-					label={isDeleting ? 'Enter password name to delete' : 'Input'}
+					label={isDeleting ? 'Confirm delete (y/n)' : 'Input'}
 				/>
 				<Controls
 					controls={controls}

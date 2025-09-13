@@ -130,7 +130,7 @@ export const ScreenProvider: React.FC<{children: React.ReactNode}> = ({
 					setCurrentVaultManager(null);
 				}
 			}
-
+			clearToast();
 			setPreviousScreen(currentScreen);
 			setCurrentScreenState(backScreen);
 		}

@@ -137,19 +137,31 @@ class VaultManager {
 	};
 
 	// metadata crud
-	updateMetadata = async (metadata: VaultMetadata): Promise<void> => {
+	updateMetadata = async (metadata: Partial<VaultMetadata>): Promise<void> => {
+		const enableTimestamps =
+			metadata.enableTimestamps ?? this.vaultMetadata?.enableTimestamps ?? 1;
+		const updatedAt = enableTimestamps ? Date.now() : null;
+
 		await this.db
 			.update(metadataTable)
 			.set({
-				description: metadata.description,
-				name: metadata.name,
-				enableTimestamps: metadata.enableTimestamps,
+				description: metadata.description ?? this.vaultMetadata?.description,
+				name: metadata.name ?? this.vaultMetadata?.name,
+				enableTimestamps: enableTimestamps,
+				updatedAt: updatedAt,
 			})
 			.where(eq(metadataTable.id, this.vaultMetadata?.id || 0));
 
-		if (metadata.enableTimestamps) {
+		if (enableTimestamps) {
 			await this.updateUpdatedAt();
 		}
+	};
+
+	updateVaultPassword = async (password: string): Promise<void> => {
+		await this.db
+			.update(metadataTable)
+			.set({lastPasswordChange: Date.now()})
+			.where(eq(metadataTable.id, this.vaultMetadata?.id || 0));
 	};
 
 	// when user updates vault password

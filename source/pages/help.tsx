@@ -26,12 +26,7 @@ export const Help = () => {
 		shortcutControl(input, controls);
 	});
 	return (
-		<Box
-			flexDirection="column"
-			flexGrow={1}
-			justifyContent="flex-start"
-			alignItems="center"
-		>
+		<Box flexDirection="column" flexGrow={1} justifyContent="space-between">
 			<Header title={title} />
 			<Footer>
 				<Controls

@@ -192,14 +192,7 @@ export const EditVault = () => {
 			return;
 		}
 
-		if (!formData.password.trim()) {
-			// TODO: show error
-			showToast('password is required', ToastLineType.ERROR);
-			return;
-		}
-
 		if (formData.password.length < PASSWORD_MIN_LENGTH) {
-			// TODO: show error
 			showToast(
 				`password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
 				ToastLineType.ERROR,
@@ -213,22 +206,34 @@ export const EditVault = () => {
 			return;
 		}
 
-		try {
-			const expandedVaultsPath = expandPath(settings['vaults-path']);
-			const filePath = `${expandedVaultsPath}/${formData.name}${VAULT_FILE_EXTENSION}`;
+		if (!selectedVault) {
+			try {
+				const expandedVaultsPath = expandPath(settings['vaults-path']);
+				const filePath = `${expandedVaultsPath}/${formData.name}${VAULT_FILE_EXTENSION}`;
 
-			await core.createVault(
-				filePath,
-				formData.name,
-				formData.description,
-				formData.enableTimestamps,
-			);
+				await core.createVault(
+					filePath,
+					formData.name,
+					formData.description,
+					formData.enableTimestamps,
+				);
 
-			goBack();
-			showToast('vault created', ToastLineType.SUCCESS);
-			setHasUnsavedChanges(false);
-		} catch (error) {
-			showToast('failed to create vault', ToastLineType.ERROR);
+				goBack();
+				showToast('vault created', ToastLineType.SUCCESS);
+				setHasUnsavedChanges(false);
+			} catch (error) {
+				showToast('failed to create vault', ToastLineType.ERROR);
+			}
+		} else {
+			// try {
+			// 	await currentVaultManager?.updateMetadata({
+			// 		name: formData.name,
+			// 		description: formData.description,
+			// 		enableTimestamps: formData.enableTimestamps,
+			// 	});
+			// } catch (error) {
+			// 	showToast('failed to update vault', ToastLineType.ERROR);
+			// }
 		}
 	};
 
@@ -254,14 +259,6 @@ export const EditVault = () => {
 		: 'New Vault';
 
 	const {buffer, enableBuffer, clearBuffer} = useCustomInput((input, key) => {
-		if (buffer.isActive && key.return) {
-			// save buffer content to current form field
-			const currentInput = formInputs[selectedFormIndex];
-			currentInput?.onChange?.(buffer.content);
-			clearBuffer();
-			// TODO: Handle validation errors if needed
-			return;
-		}
 		if (isConfirmingDiscard && key.return) {
 			if (buffer.content.toLowerCase() === 'y') {
 				goBack();
@@ -269,6 +266,14 @@ export const EditVault = () => {
 				clearBuffer();
 				setIsConfirmingDiscard(false);
 			}
+			return;
+		}
+		if (buffer.isActive && key.return) {
+			// save buffer content to current form field
+			const currentInput = formInputs[selectedFormIndex];
+			currentInput?.onChange?.(buffer.content);
+			clearBuffer();
+			// TODO: Handle validation errors if needed
 			return;
 		}
 		if (!buffer.isActive) {
@@ -327,7 +332,7 @@ export const EditVault = () => {
 						)}
 						{hasValidTimestamp(selectedVault.createdAt) && (
 							<Text color={Colors.DEFAULT}>
-								The vault was created{' '}
+								The vault was created on{' '}
 								{formatDateFriendly(selectedVault.createdAt)}.
 							</Text>
 						)}

@@ -20,7 +20,7 @@ export const Table = ({
 	header,
 	selectedIndex,
 	isDeleting,
-	minPadding = 2,
+	minPadding = 4,
 }: TableProps) => {
 	const {cols} = useScreen();
 	if (!rows || rows.length === 0) {
